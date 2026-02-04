@@ -11,7 +11,7 @@ connectDB();
 
 app.use(express.json());
 app.use(cors({
-    origin: ["https://your-frontend-link.vercel.app", "http://localhost:5173"], // Local aur Vercel dono allow karein
+    origin: process.env.FRONTEND_URL || true, // Local aur Vercel dono allow karein
     credentials: true
 }));
 app.use(CookieParser());
