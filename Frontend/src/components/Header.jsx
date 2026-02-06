@@ -57,7 +57,7 @@ export default function Header() {
                <Building2 size={20} className="text-[#031930]" />
             </div>
             <span className="text-lg font-black tracking-tighter normal-case">
-              RENTMY<span className="text-cyan-400">VENUE</span>
+              RENt<span className="text-cyan-400">VENUE</span>
             </span>
           </Link>
         </div>
