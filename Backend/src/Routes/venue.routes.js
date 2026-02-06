@@ -1,9 +1,8 @@
-const Router=require('express').Router()
-const authmiddleware = require('../middlewares/auth.middleware')
-const{createVenue,getAllVenues,getVenueById,updateVenue,deleteVenue}=require('../controllers/venue.controller')
+const Router = require('express').Router();
+const { createVenue, getAllVenues, getVenueById, updateVenue, deleteVenue } = require('../controllers/venue.controller');
 
-Router.post('/venues',authmiddleware,createVenue)
+// Isse aapka user registration (Name/Email) kharab nahi hoga 
+// Kyunki wo 'auth' routes mein hota hai
+Router.post('/register', createVenue);
 
-
-module.exports=Router
-
+module.exports = Router;
