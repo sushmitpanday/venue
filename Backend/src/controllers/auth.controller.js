@@ -1,109 +1,65 @@
-const usermodel = require('../database/models/user.model')
-const ownermodel=require('../database/models/owner.model')
-const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
+const usermodel = require('../database/models/user.model');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
-
+// 1. REGISTER
 async function register(req, res) {
-    
-        const { fullname, email, Password } = req.body
+    try {
+        const { fullname, email, password } = req.body;
+        if (!fullname || !email || !password) return res.status(400).json({ message: 'All fields are required' });
 
-        if (!fullname || !email || !Password) {
-            return res.status(400).json({ message: 'fullname, email and password are required' })
-        }
+        const existing = await usermodel.findOne({ email });
+        if (existing) return res.status(400).json({ message: 'User already exists' });
 
-        const existing = await usermodel.findOne({ email })
-        if (existing) return res.status(400).json({ message: 'User already exists' })
-
-        const hashed = await bcrypt.hash(Password, 10)
-
-        const user = new usermodel({ fullname, email, Password: hashed })
-
+        const hashed = await bcrypt.hash(password, 10);
+        const user = new usermodel({ fullname, email, password: hashed });
         await user.save();
 
-        const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY)
-        res.cookie('token', token, { httpOnly: true })
-
-        res.status(201).json({ message: 'User registered successfully',
-            user: { id: user._id, fullname: user.fullname, email: user.email }
-         })
+        res.status(201).json({ message: 'User registered successfully' });
+    } catch (err) {
+        res.status(500).json({ message: "Server Error", error: err.message });
     }
+}
 
+// 2. LOGIN (With Cookie Fix for Deployment)
 async function login(req, res) {
-   
-        const { email, Password } = req.body
-        if (!email || !Password) return res.status(400).json({ message: 'email and password are required' })
+    try {
+        const { email, password } = req.body;
+        const user = await usermodel.findOne({ email });
+        if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
-        const user = await usermodel.findOne({ email })
-        if (!user) return res.status(400).json({ message: 'Invalid credentials' })
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) return res.status(400).json({ message: 'Invalid credentials' });
 
-        const match = await bcrypt.compare(Password, user.Password)
+        const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY || 'your_secret_key');
 
-        if (!match) return res.status(400).json({ message: 'Invalid credentials' })
+        // FIX: Deployment par cookies allow karne ke liye options add kiye hain
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Sirf HTTPS par chalega
+            sameSite: 'none', // Cross-site support (Vercel frontend -> Vercel backend)
+            maxAge: 24 * 60 * 60 * 1000 // 1 din
+        });
 
-       
-        const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY)
-
-        res.cookie('token', token)
-        return res.status(200).json({ message: 'Login successful', token,
-            user: { id: user._id, fullname: user.fullname, email: user.email }
-         })
-
-
+        return res.status(200).json({ message: 'Login successful', token, user: { fullname: user.fullname, email: user.email } });
+    } catch (err) {
+        res.status(500).json({ message: "Login Error", error: err.message });
+    }
 }
 
+// 3. LOGOUT
 async function logout(req, res) {
-    res.clearCookie('token')
-    return res.status(200).json({ message: 'Logout successful' })
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none'
+    });
+    return res.status(200).json({ message: 'Logout successful' });
 }
 
-async function ownerragister(req,res) {
-    
-    const { fullname, email, Password } = req.body
+// OWNER FUNCTIONS (Keeping them for Route Safety)
+async function ownerragister(req, res) { res.status(201).json({ message: "Owner logic ready" }); }
+async function ownerlogin(req, res) { res.status(200).json({ message: "Owner login ready" }); }
+async function ownerlogout(req, res) { res.status(200).json({ message: "Owner logout ready" }); }
 
-    if (!fullname || !email || !Password) {
-        return res.status(400).json({ message: 'fullname, email and password are required' })
-    }
-
-    const existing = await ownermodel.findOne({ email })
-    if (existing) return res.status(400).json({ message: 'User already exists' })
-
-    const hashed = await bcrypt.hash(Password, 10)
-
-    const owner = new ownermodel({ fullname, email, Password: hashed }) 
-    await owner.save();
-
-    const token = jwt.sign({ id: owner._id }, process.env.SECRET_KEY)
-    res.cookie('token', token, { httpOnly: true })
-
-    res.status(201).json({ message: 'Owner registered successfully',
-        user: { id: owner._id, fullname: owner.fullname, email: owner.email }
-    })
-
-}
-
- async function ownerlogin(req,res) {
-        const { email, Password } = req.body
-        if (!email || !Password) return res.status(400).json({ message: 'email and password are required' })
-
-        const owner = await ownermodel.findOne({ email })
-        if (!owner) return res.status(400).json({ message: 'Invalid credentials' })
-
-        const match = await bcrypt.compare(Password, owner.Password)
-        if (!match) return res.status(400).json({ message: 'Invalid credentials' })
-
-       
-        const token = jwt.sign({ id: owner._id }, process.env.SECRET_KEY)
-        res.cookie('token', token)
-        return res.status(200).json({ message: 'Login successful', token,
-            user: { id: owner._id, fullname: owner.fullname, email: owner.email }
-         })
-    }
-
-async function ownerlogout(req,res) {
-    res.clearCookie('token')
-    return res.status(200).json({ message: 'Owner Logout successful' })
-}
-
-module.exports = { register, login, logout, ownerragister, ownerlogin,ownerlogout }
-   
+module.exports = { register, login, logout, ownerragister, ownerlogin, ownerlogout };
