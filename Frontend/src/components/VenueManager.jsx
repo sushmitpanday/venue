@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const VenueManager = () => {
-    const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
+   const API_BASE = window.location.hostname === "localhost" 
+    ? "http://localhost:3000" 
+    : "https://venue-a6dy.vercel.app";
     
     const [venueData, setVenueData] = useState({
         name: '', price: '', city: '', tehsil: '', state: '', address: ''
