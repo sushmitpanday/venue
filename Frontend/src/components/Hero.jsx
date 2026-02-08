@@ -62,9 +62,12 @@ const Hero = () => {
                             {slide.title} <br /> <span>{slide.span}</span>
                           </h2>
                         </div>
-                        <div className="main-slider-one__btn animate-text-delay-2 mt-4">
+                        <div className="main-slider-one__btn animate-text-delay-2 mt-4 flex flex-col md:flex-row items-center justify-center gap-4">
                            <a href="#" className="thm-btn inline-block bg-white text-[#031930] px-8 py-3 rounded-full font-bold">
                               Book Now
+                           </a>
+                            <a href="#" className="thm-btn inline-block bg-white text-[#031930] px-8 py-3 rounded-full font-bold">
+                              VIEW MORE
                            </a>
                         </div>
                       </div>
@@ -77,59 +80,7 @@ const Hero = () => {
         </Swiper>
       </section>
 
-      {/* Booking Bar - Now 100% Width & Below Image */}
-      <div className="booking-container">
-        <div className="booking-wrapper">
-          {/* Check In */}
-          <div className="booking-item">
-            <div className="booking-content">
-              <span className="label">CHECKIN</span>
-              <p className="value">22/07/2023</p>
-            </div>
-            <FaCalendarAlt className="icon" />
-          </div>
-
-          {/* Check Out */}
-          <div className="booking-item border-left">
-            <div className="booking-content">
-              <span className="label">CHECKOUT</span>
-              <p className="value">22/07/2023</p>
-            </div>
-            <FaCalendarAlt className="icon" />
-          </div>
-
-          {/* Guests */}
-          <div className="booking-item border-left">
-            <div className="booking-content">
-              <span className="label">GUESTS</span>
-              <div className="guest-control">
-                 <p className="value">1</p>
-                 <div className="plus-minus">
-                    <span>-</span>
-                    <span>+</span>
-                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Location */}
-          <div className="booking-item border-left flex-grow">
-            <div className="booking-content">
-              <span className="label">LOCATION</span>
-              <p className="value">Where To Next?</p>
-            </div>
-            <FaMapMarkerAlt className="icon" />
-          </div>
-
-          {/* Actions */}
-          <div className="booking-actions">
-             <FaSlidersH className="filter-icon" />
-             <button className="search-btn">
-                <FaSearch />
-             </button>
-          </div>
-        </div>
-      </div>
+     
     </>
   );
 };
