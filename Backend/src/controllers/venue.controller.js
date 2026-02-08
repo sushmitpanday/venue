@@ -1,28 +1,53 @@
 const Venue = require('../database/models/venue.model');
 
-async function createVenue(req, res) {
+// 1. Naya Hotel/Venue banane ke liye
+const createVenue = async(req, res) => {
     try {
-        console.log("Body received:", req.body); // Ye check karne ke liye ki data aa raha hai
+        const { name, location, price, description, contactNumber } = req.body;
 
-        const venueData = req.body;
+        const newVenue = new Venue({
+            name,
+            location,
+            price: Number(price),
+            description,
+            contactNumber,
+            ownerId: req.owner._id // Ye authmiddleware se aa raha hai
+        });
 
-        // Agar middleware se user nahi mila, toh frontend wali ID use karein
-        // Aur Model mein field ka naam 'ownerId' hai, isliye wahi use karein
-        if (req.owner) {
-            venueData.ownerId = req.owner._id;
-        } else if (!venueData.ownerId) {
-            return res.status(400).json({ message: "Owner ID is missing" });
-        }
-
-        const newVenue = new Venue(venueData);
         await newVenue.save();
-
-        console.log("✅ Venue saved to Atlas");
-        res.status(201).json(newVenue);
-    } catch (error) {
-        console.error("Error creating venue:", error);
-        res.status(500).json({ message: 'Error creating venue', error: error.message });
+        res.status(201).json({ message: "Hotel registered successfully!", venue: newVenue });
+    } catch (err) {
+        res.status(500).json({ message: "Hotel registration failed", error: err.message });
     }
-}
+};
 
-module.exports = { createVenue };
+// 2. Sirf login kiye hue owner ke hotels dikhane ke liye
+const getOwnerVenues = async(req, res) => {
+    try {
+        // req.owner._id wahi hai jo token se nikal raha hai
+        const venues = await Venue.find({ ownerId: req.owner._id });
+        res.status(200).json(venues);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching your venues", error: err.message });
+    }
+};
+
+// 3. Sabhi venues dikhane ke liye (Customer side)
+const getAllVenues = async(req, res) => {
+    try {
+        const venues = await Venue.find({});
+        res.status(200).json(venues);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching venues", error: err.message });
+    }
+};
+
+// Exports (Jo aapne pehle bheje the)
+module.exports = {
+    createVenue,
+    getAllVenues,
+    getOwnerVenues,
+    getVenueById: (req, res) => {},
+    updateVenue: (req, res) => {},
+    deleteVenue: (req, res) => {}
+};

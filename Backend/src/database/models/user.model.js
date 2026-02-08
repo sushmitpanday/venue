@@ -10,18 +10,22 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        lowercase: true, // Email hamesha small letters mein save hoga
+        lowercase: true,
         trim: true
     },
-    // FIX: Capital 'P' ko badal kar small 'p' kar diya hai
     password: {
         type: String,
         required: true
+    },
+    // YE ZAROORI HAI: Taaki pata chale ki ye 'user' hai ya 'owner'
+    role: {
+        type: String,
+        enum: ['user', 'owner'],
+        default: 'user'
     }
 }, {
-    timestamps: true // Isse createdAt aur updatedAt apne aap ban jayenge
+    timestamps: true
 });
 
 const usermodel = mongoose.model("user", userSchema);
-
 module.exports = usermodel;
