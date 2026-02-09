@@ -6,7 +6,7 @@ import { User, Mail, Lock, UserPlus, ArrowRight } from 'lucide-react';
 // API Configuration
 const API_BASE = window.location.hostname === "localhost" 
   ? "http://localhost:3000" 
-  : "https://venue-1116.vercel.app";
+  : "https://venue-kpec.vercel.app";
 
 const Register = () => {
   const [fullname, setFullname] = useState('');
