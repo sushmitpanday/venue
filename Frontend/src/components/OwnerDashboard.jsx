@@ -7,7 +7,7 @@ const OwnerDashboard = () => {
     const navigate = useNavigate();
     const API_BASE = window.location.hostname === "localhost" 
         ? "http://localhost:3000" 
-        : "https://venue-sooty.vercel.app";
+        : "https://venue-4r55.vercel.app";
     
     const [activeTab, setActiveTab] = useState('view');
     const [myVenues, setMyVenues] = useState([]);
