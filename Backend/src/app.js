@@ -7,29 +7,37 @@ const cors = require('cors');
 const connectDB = require('./database/db');
 const Venue = require('./database/models/venue.model');
 
-connectDB();
+// Middleware
 app.use(express.json());
 app.use(CookieParser());
-
-// --- Sabse Simple CORS (No Error Guaranteed) ---
 app.use(cors({
-    origin: true, // Ye automatically aane wale request ke origin ko allow kar dega
+    origin: true,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
+// --- 1. DB Connection Wrapper (Sabse Jaruri) ---
+const startConnection = async() => {
+    await connectDB();
+};
+
 app.get("/", (req, res) => {
     res.send('API is running...');
 });
 
-app.use("/api/auth", authrouters);
-app.use("/api/venue", venueRouters);
+// --- 2. Routes mein DB connection ensure kar ---
+app.use("/api/auth", async(req, res, next) => { await startConnection();
+    next(); }, authrouters);
+app.use("/api/venue", async(req, res, next) => { await startConnection();
+    next(); }, venueRouters);
 
 app.get('/api/search', async(req, res) => {
     try {
+        await startConnection(); // Har request par connection check
         const { query } = req.query;
         if (!query) return res.status(200).json([]);
+
         const searchRegex = { $regex: query.trim(), $options: 'i' };
         const results = await Venue.find({
             $or: [
@@ -38,9 +46,11 @@ app.get('/api/search', async(req, res) => {
                 { "location.state": searchRegex }
             ]
         }).sort({ createdAt: -1 });
+
         res.status(200).json(results);
     } catch (err) {
-        res.status(500).json({ error: "Search failed" });
+        console.error(err);
+        res.status(500).json({ error: "Search failed", details: err.message });
     }
 });
 
