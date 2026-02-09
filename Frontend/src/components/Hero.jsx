@@ -75,20 +75,14 @@ const Hero = () => {
                         </div>
 
                         {/* Buttons converted to Black/Cyan Theme */}
-                        <div className="main-slider-one__btn animate-text-delay-2 mt-10 flex flex-col md:flex-row items-center justify-center gap-4">
-                          <a 
-                            href="#" 
-                            className="thm-btn inline-block bg-white text-black hover:bg-cyan-500 hover:text-black px-10 py-4 rounded-full font-black uppercase text-[12px] tracking-widest transition-all shadow-xl"
-                          >
-                            Book Now
-                          </a>
-                          <a 
-                            href="#" 
-                            className="thm-btn inline-block bg-zinc-900 text-white border border-white/20 hover:border-cyan-500 hover:text-cyan-400 px-10 py-4 rounded-full font-black uppercase text-[12px] tracking-widest transition-all"
-                          >
-                            VIEW MORE
-                          </a>
-                        </div>
+                    <div className="main-slider-one__btn animate-text-delay-2 mt-10 flex justify-center">
+  <a 
+    href="#" 
+    className="thm-btn inline-block bg-white text-black hover:bg-cyan-500 hover:text-black px-10 py-4 rounded-full font-black uppercase text-[12px] tracking-widest transition-all shadow-xl"
+  >
+    Book Now
+  </a>
+</div>
                       </div>
                     </div>
                   </div>

@@ -9,7 +9,7 @@ export default function Header() {
 
   const API_BASE = window.location.hostname === "localhost" 
     ? "http://localhost:3000" 
-    : "https://venue-giv8.vercel.app";
+    : "https://venue-sooty.vercel.app";
   
   const [searchData, setSearchData] = useState({ city: '', tehsil: '', state: '' });
   const [results, setResults] = useState([]);
