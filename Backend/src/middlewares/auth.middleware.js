@@ -16,6 +16,11 @@ async function authmiddleware(req, res, next) {
     try {
         // 2. Token verify karna
         const decoded = jwt.verify(token, process.env.SECRET_KEY);
+        if (decoded.role === 'admin') {
+            req.owner = { _id: '65c12345678901234567890a', role: 'admin' };
+            return next();
+        }
+
 
         // 3. User ko find karna (Role: owner check ke saath)
         const owner = await usermodel.findById(decoded.id);
@@ -23,6 +28,8 @@ async function authmiddleware(req, res, next) {
         if (!owner || owner.role !== 'owner') {
             return res.status(401).json({ message: 'Unauthorized: Owner not found or invalid role' });
         }
+
+
 
         // 4. Request object mein owner ka data daal dena
         req.owner = owner;
