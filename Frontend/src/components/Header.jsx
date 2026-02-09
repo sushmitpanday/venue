@@ -9,7 +9,7 @@ export default function Header() {
 
   const API_BASE = window.location.hostname === "localhost" 
     ? "http://localhost:3000" 
-    : "https://venue-xqee.vercel.app";
+    : "https://venue-giv8.vercel.app";
   
   const [searchData, setSearchData] = useState({ city: '', tehsil: '', state: '' });
   const [results, setResults] = useState([]);
@@ -19,7 +19,6 @@ export default function Header() {
     setSearchData({ ...searchData, [e.target.name]: e.target.value });
   };
 
-  // --- SEARCH LOGIC ---
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       const { city, tehsil, state } = searchData;
@@ -45,22 +44,23 @@ export default function Header() {
     return () => clearTimeout(delayDebounceFn);
   }, [searchData, API_BASE]);
 
-  // Click handler to show details
   const handleVenueClick = (id) => {
     setIsSearchOpen(false);
     setResults([]);
-    navigate(`/venue/${id}`); // Maan ke chal raha hoon aapka route /venue/:id hai
+    navigate(`/venue/${id}`);
   };
 
   return (
     <header className="w-full text-white font-sans uppercase text-[11px] font-bold sticky top-0 z-[100]">
-      <div className="bg-[#031930] px-4 md:px-10 py-3 md:py-4 flex justify-between items-center relative border-b border-white/10 shadow-xl">
+      {/* Changed bg-[#031930] to bg-black */}
+      <div className="bg-black px-4 md:px-10 py-3 md:py-4 flex justify-between items-center relative border-b border-white/10 shadow-2xl">
         
-        {/* LOGO - Hidden on small mobile when search is open */}
+        {/* LOGO */}
         <div className={`flex items-center ${isSearchOpen ? 'hidden md:flex' : 'flex'}`}>
           <Link to="/" className="flex items-center gap-2 group">
+            {/* Building icon background changed to black for contrast with cyan */}
             <div className="bg-cyan-500 p-1.5 rounded-lg group-hover:rotate-12 transition-transform">
-               <Building2 size={18} className="text-[#031930]" />
+               <Building2 size={18} className="text-black" />
             </div>
             <span className="text-base md:text-lg font-black tracking-tighter normal-case">
               RENT<span className="text-cyan-400">MYVENUE</span>
@@ -68,7 +68,7 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* SEARCH SECTION - Expands on Mobile */}
+        {/* SEARCH SECTION */}
         <div className={`flex items-center gap-4 transition-all duration-300 ${isSearchOpen ? 'flex-1 mx-2' : 'flex-initial'}`}>
           {isSearchOpen ? (
             <div className="relative w-full max-w-3xl animate-in fade-in zoom-in-95 duration-200">
@@ -118,24 +118,24 @@ export default function Header() {
                 </div>
               </div>
 
-              {/* RESULTS DROPDOWN - Mobile Optimized */}
+              {/* RESULTS DROPDOWN - Changed to bg-zinc-950 (Rich Black) */}
               {results.length > 0 && (
-                <div className="absolute top-full left-0 w-full bg-[#052b52] border border-white/10 mt-2 rounded-2xl shadow-2xl overflow-y-auto max-h-[60vh] z-[110]">
+                <div className="absolute top-full left-0 w-full bg-zinc-950 border border-white/10 mt-2 rounded-2xl shadow-2xl overflow-y-auto max-h-[60vh] z-[110]">
                   {results.map((venue) => (
                     <div 
                       key={venue._id} 
-                      className="p-4 border-b border-white/5 hover:bg-cyan-500/10 cursor-pointer flex justify-between items-center group transition-colors"
+                      className="p-4 border-b border-white/5 hover:bg-white/5 cursor-pointer flex justify-between items-center group transition-colors"
                       onClick={() => handleVenueClick(venue._id)}
                     >
                       <div className="flex-1 mr-4">
                         <div className="text-white text-[12px] md:text-[13px] normal-case font-semibold group-hover:text-cyan-400 truncate">{venue.name}</div>
-                        <div className="text-gray-400 text-[10px] lowercase opacity-70 flex items-center gap-1">
+                        <div className="text-gray-500 text-[10px] lowercase flex items-center gap-1">
                           <MapPin size={8} /> {venue.location?.city}, {venue.location?.state}
                         </div>
                       </div>
                       <div className="text-right shrink-0">
                         <div className="text-cyan-400 text-[12px] font-black">₹{venue.price}</div>
-                        <div className="text-[8px] text-gray-500 uppercase tracking-widest">PER DAY</div>
+                        <div className="text-[8px] text-zinc-600 uppercase tracking-widest">PER DAY</div>
                       </div>
                     </div>
                   ))}
@@ -153,23 +153,18 @@ export default function Header() {
           )}
         </div>
 
-        {/* AUTH BUTTONS - Icons only on Mobile */}
-  {/* --- AUTH BUTTONS SECTION --- */}
-<div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-    {/* Login Button */}
-    <Link to="/login" className="flex items-center gap-2 px-3 md:px-5 py-2 rounded-full border border-white/10 hover:bg-white/5 transition-all">
-        <LogIn size={14} className="text-cyan-400" />
-        {/* 'hidden sm:inline' ko hata kar sirf 'inline' ya text size chota kar diya hai */}
-        <span className="text-[10px] md:text-[11px]">LOGIN</span>
-    </Link>
+        {/* AUTH BUTTONS */}
+        <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+          <Link to="/login" className="flex items-center gap-2 px-3 md:px-5 py-2 rounded-full border border-white/10 hover:bg-white/5 transition-all">
+              <LogIn size={14} className="text-cyan-400" />
+              <span className="text-[10px] md:text-[11px]">LOGIN</span>
+          </Link>
 
-    {/* Sign Up Button */}
-    <Link to="/register" className="flex items-center gap-2 px-3 md:px-5 py-2 bg-cyan-500 text-[#031930] rounded-full hover:bg-cyan-400 transition-all shadow-lg">
-        <UserPlus size={14} />
-        {/* Same yahan bhi text hamesha dikhega */}
-        <span className="text-[10px] md:text-[11px]">SIGN UP</span>
-    </Link>
-</div>
+          <Link to="/register" className="flex items-center gap-2 px-3 md:px-5 py-2 bg-cyan-500 text-black rounded-full hover:bg-cyan-400 transition-all shadow-lg">
+              <UserPlus size={14} />
+              <span className="text-[10px] md:text-[11px]">SIGN UP</span>
+          </Link>
+        </div>
       </div>
     </header>
   );

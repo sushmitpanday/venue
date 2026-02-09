@@ -8,23 +8,23 @@ import Login from './components/Login';
 import Register from './components/Register';
 import OwnerDashboard from './components/OwnerDashboard';
 import VenueDetial from './components/VenueDetial';
+import AdminDashboard from './components/AdminDashboard';
 
-// Layout Manager Component
 const AppContent = () => {
   const location = useLocation();
   
-  // In pages par Header, Hero, VenueManager aur Footer kuch nahi dikhega
-  const hideLayout = ['/login', '/register', '/owner-dashboard'];
+  // YAHAN BADLAV KIYA HAI: Admin Dashboard ka path bhi add kar diya
+  const hideLayout = ['/login', '/register', '/owner-dashboard', '/admin-dashboard'];
+  
   const isCleanPage = hideLayout.includes(location.pathname);
 
   return (
     <div className="app-container">
-      {/* Agar Clean Page nahi hai, tabhi ye sab dikhao */}
+      {/* Agar Clean Page nahi hai, tabhi Header aur Hero dikhega */}
       {!isCleanPage && (
         <>
           <Header />
           <Hero />
-        
         </>
       )}
 
@@ -32,15 +32,14 @@ const AppContent = () => {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/" element={<UserRegister />} />
           <Route path="/venue/:id" element={<VenueDetial />} />
-          {/* Kal ko owner dashboard yahan aayega */}
           <Route path="/owner-dashboard" element={<OwnerDashboard/>}/>
         </Routes>
       </main>
 
-      {/* Footer condition: Sirf tab dikhega jab login/register page na ho */}
+      {/* Footer bhi hideLayout wali pages par nahi dikhega */}
       {!isCleanPage && <Footer />}
     </div>
   );
