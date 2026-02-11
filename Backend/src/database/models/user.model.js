@@ -17,10 +17,36 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    // YE ZAROORI HAI: Taaki pata chale ki ye 'user' hai ya 'owner'
+    // --- Naye Fields Jo Aapne Register Form Mein Add Kiye Hain ---
+    phone: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    occupation: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    address: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    govtIdType: {
+        type: String,
+        enum: ['Aadhar', 'PAN', 'VoterID', 'Driving'], // Sirf yehi options allow honge
+        required: true
+    },
+    govtIdNumber: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    // Role logic
     role: {
         type: String,
-        enum: ['user', 'owner'],
+        enum: ['user', 'owner', 'agent', 'admin'],
         default: 'user'
     }
 }, {

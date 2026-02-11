@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const authrouters = require('./Routes/auth.routes');
 const venueRouters = require('./Routes/venue.routes');
+const paymentRoutes = require('./Routes/payment.routes');
 const CookieParser = require('cookie-parser');
 const cors = require('cors');
 const connectDB = require('./database/db');
@@ -17,24 +18,31 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// --- 1. DB Connection Wrapper (Sabse Jaruri) ---
-const startConnection = async() => {
+// DB Connection Wrapper (Reusable)
+const startConnection = async(req, res, next) => {
     await connectDB();
+    next();
 };
 
 app.get("/", (req, res) => {
     res.send('API is running...');
 });
 
-// --- 2. Routes mein DB connection ensure kar ---
-app.use("/api/auth", async(req, res, next) => { await startConnection();
-    next(); }, authrouters);
-app.use("/api/venue", async(req, res, next) => { await startConnection();
-    next(); }, venueRouters);
+// --- ROUTES REGISTRATION ---
 
-app.get('/api/search', async(req, res) => {
+// 1. Auth Routes (Ab isi ke andar Agent, Owner, aur Admin sab hain)
+// Frontend path: /api/auth/agent/login etc.
+app.use("/api/auth", startConnection, authrouters);
+
+// 2. Venue Routes
+app.use("/api/venue", startConnection, venueRouters);
+
+// 3. Payment Routes
+app.use("/api/payment", startConnection, paymentRoutes);
+
+// Search API
+app.get('/api/search', startConnection, async(req, res) => {
     try {
-        await startConnection(); // Har request par connection check
         const { query } = req.query;
         if (!query) return res.status(200).json([]);
 

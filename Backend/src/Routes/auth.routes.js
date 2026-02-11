@@ -1,45 +1,47 @@
-const Router = require('express').Router();
-// 1. Pehle controller se naye functions ko yahan add kijiye
+const express = require('express');
+const Router = express.Router();
+const authController = require('../controllers/auth.controller');
+
+// Destructuring functions from controller
 const {
     register,
     login,
     logout,
     ownerlogin,
     ownerlogout,
-    ownerragister,
+    ownerragister, // Spelling check kar: 'ragister' ya 'register'?
     getAllUsers,
-    getAllOwners // <-- Ye naye functions import karein
-} = require('../controllers/auth.controller');
+    getAllOwners,
+    registerAgent,
+    loginAgent,
+    agentLogout,
+    getAllAgents
+} = authController;
 
-const usermodel = require('../database/models/user.model');
+// Pehle check kar ki koi function undefined toh nahi hai
+// Agar undefined hogi toh console mein error dikhega crash hone se pehle
+if (!registerAgent || !ownerragister) {
+    console.error("❌ ERROR: Some controller functions are UNDEFINED. Check auth.controller.js exports.");
+}
 
-// AUTH ROUTES
+// 1. CUSTOMER (USER) ROUTES
 Router.post('/user/register', register);
 Router.post('/user/login', login);
 Router.get('/user/logout', logout);
 
-// OWNER + HOTEL COMBINED ROUTE
+// 2. OWNER ROUTES
 Router.post('/owner/register', ownerragister);
 Router.post('/owner/login', ownerlogin);
 Router.get('/owner/logout', ownerlogout);
 
-// --- ADMIN DASHBOARD ROUTES (Ye do lines add karein) ---
+// 3. AGENT ROUTES
+Router.post('/agent/register', registerAgent);
+Router.post('/agent/login', loginAgent);
+Router.get('/agent/logout', agentLogout);
 
-// Frontend yahan se 'Users' ki list lega
+// 4. ADMIN DASHBOARD ROUTES
 Router.get('/admin/users', getAllUsers);
-
-// Frontend yahan se 'Owners' ki list lega
 Router.get('/admin/owners', getAllOwners);
-
-
-// GET ALL DATA (Jo aapne pehle banaya tha, ise debug ke liye rehne de sakte hain)
-Router.get('/user/all', async(req, res) => {
-    try {
-        const users = await usermodel.find({});
-        res.status(200).json(users);
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching data", error: error.message });
-    }
-});
+Router.get('/admin/agents', getAllAgents);
 
 module.exports = Router;
