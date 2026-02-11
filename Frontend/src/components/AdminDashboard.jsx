@@ -7,7 +7,7 @@ const AdminDashboard = () => {
     const navigate = useNavigate();
     const API_BASE = window.location.hostname === "localhost" 
         ? "http://localhost:3000" 
-        : "https://venue-kpec.vercel.app";
+        : "https://venue-ldog.vercel.app";
     
     const [activeTab, setActiveTab] = useState('user-listings');
     const [userVenues, setUserVenues] = useState([]);

@@ -1,12 +1,13 @@
-// components/Footer.js
 import React from "react";
-import { Mail, Phone, MapPin, Send, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Facebook, Twitter, Instagram, Youtube, Users } from 'lucide-react';
+import { Link } from 'react-router-dom'; // Link import karna zaroori hai
 
 const Footer = () => {
   const links = ["Hotel Room", "Restaurant", "Privacy Policy", "About Us", "Contact Us"];
+  
   return (
-   <footer className="bg-black text-white font-sans pt-16 pb-6 uppercase text-[12px]">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 border-b border-zinc-800 pb-12">
+    <footer className="bg-black text-white font-sans pt-16 pb-6 uppercase text-[12px]">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-zinc-800 pb-12">
         
         {/* 1. About Section */}
         <div className="space-y-6">
@@ -15,7 +16,6 @@ const Footer = () => {
             There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration.
           </p>
           <div className="relative max-w-[280px]">
-            {/* Input background changed to Zinc-900 */}
             <input 
               type="email" 
               placeholder="Email Address" 
@@ -35,7 +35,7 @@ const Footer = () => {
         </div>
 
         {/* 2. Quick Links Section */}
-        <div className="md:pl-10">
+        <div className="">
           <h3 className="text-lg font-black normal-case mb-6 tracking-tighter">Quick Links</h3>
           <ul className="space-y-3">
             {links.map((link) => (
@@ -48,35 +48,49 @@ const Footer = () => {
           </ul>
         </div>
 
-        {/* 3. Contact Section */}
+        {/* --- NAYA AGENT SECTION --- */}
+        <div className="">
+          <h3 className="text-lg font-black normal-case mb-6 tracking-tighter italic text-purple-400">Agent Portal</h3>
+          <p className="text-zinc-500 normal-case mb-4 text-[11px] leading-tight">Earn commission by listing venues with us.</p>
+          <div className="space-y-4">
+            <Link to="/agent-register" className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 text-purple-400 px-5 py-3 rounded-xl hover:bg-purple-500 hover:text-white transition-all w-full justify-center font-black tracking-widest group">
+              <Users size={16} className="group-hover:scale-110 transition-transform" />
+              JOIN AS AGENT
+            </Link>
+            <Link to="/agent-login" className="block text-center text-zinc-500 hover:text-white transition-colors font-bold tracking-[2px] text-[10px]">
+              ALREADY AN AGENT? LOGIN
+            </Link>
+          </div>
+        </div>
+
+        {/* 4. Contact Section */}
         <div className="space-y-6">
           <h3 className="text-lg font-black normal-case tracking-tighter">Contact Us</h3>
           <div className="space-y-4 text-zinc-400 normal-case font-medium">
             <div className="flex items-start gap-3 group">
               <MapPin size={18} className="text-cyan-400 shrink-0 group-hover:scale-110 transition-transform" />
-              <span className="group-hover:text-white transition-colors">6391 Elgin St. Celina, Delaware New York. USA</span>
+              <span className="group-hover:text-white transition-colors text-[11px]">6391 Elgin St. Celina, New York. USA</span>
             </div>
             <div className="flex items-center gap-3 group">
               <Phone size={18} className="text-cyan-400 shrink-0 group-hover:scale-110 transition-transform" />
-              <span className="group-hover:text-white transition-colors">(303) 555-0105</span>
+              <span className="group-hover:text-white transition-colors text-[11px]">(303) 555-0105</span>
             </div>
             <div className="flex items-center gap-3 group">
               <Mail size={18} className="text-cyan-400 shrink-0 group-hover:scale-110 transition-transform" />
-              <span className="lowercase group-hover:text-white transition-colors">michael.mitc@example.com</span>
+              <span className="lowercase group-hover:text-white transition-colors text-[11px]">venue.support@example.com</span>
             </div>
           </div>
           
-          {/* App Store Buttons - Adjusted for Black Theme */}
           <div className="flex gap-3 pt-2">
-            <button className="bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-zinc-800 hover:border-zinc-700 transition-all">
+            <button className="bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-zinc-800 transition-all">
               <div className="text-left">
-                <p className="text-[7px] opacity-50 uppercase tracking-tighter">Download on the</p>
+                <p className="text-[7px] opacity-50 tracking-tighter">Download on the</p>
                 <p className="text-[10px] font-black uppercase">App Store</p>
               </div>
             </button>
-            <button className="bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-zinc-800 hover:border-zinc-700 transition-all">
+            <button className="bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-zinc-800 transition-all">
               <div className="text-left">
-                <p className="text-[7px] opacity-50 uppercase tracking-tighter">GET IT ON</p>
+                <p className="text-[7px] opacity-50 tracking-tighter">GET IT ON</p>
                 <p className="text-[10px] font-black uppercase">Google Play</p>
               </div>
             </button>
