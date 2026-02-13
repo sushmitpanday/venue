@@ -159,10 +159,10 @@ async function ownerlogin(req, res) {
 // Check spelling: registerAgent (r-e-g-i-s-t-e-r)
 async function registerAgent(req, res) {
     try {
-        const { fullname, email, phone, address, occupation, govtIdType, govtIdNumber } = req.body;
+        const { fullname, email, phone, address, occupation, govtIdType, govtIdNumber, city, state, pincode } = req.body;
         const pass = req.body.password || req.body.Password;
 
-        if (!fullname || !email || !pass) {
+        if (!fullname || !email || !pass || !city || !state || !pincode) {
             return res.status(400).json({ message: "Mandatory fields missing" });
         }
 
@@ -172,6 +172,9 @@ async function registerAgent(req, res) {
             password: pass,
             phone,
             address,
+            city, // YE LINE ADD KARNA HAI
+            state, // YE LINE ADD KARNA HAI
+            pincode, // YE LINE ADD KARNA HAI
             occupation,
             govtIdType,
             govtIdNumber

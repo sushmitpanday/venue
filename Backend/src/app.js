@@ -3,6 +3,8 @@ const app = express();
 const authrouters = require('./Routes/auth.routes');
 const venueRouters = require('./Routes/venue.routes');
 const paymentRoutes = require('./Routes/payment.routes');
+// Pehle require karo (Ye line upar baki imports ke sath dalo)
+const adminRoutes = require('./Routes/admin.routes');
 const CookieParser = require('cookie-parser');
 const cors = require('cors');
 const connectDB = require('./database/db');
@@ -36,6 +38,9 @@ app.use("/api/auth", startConnection, authrouters);
 
 // 2. Venue Routes
 app.use("/api/venue", startConnection, venueRouters);
+
+// --- YEH WALI LINE ADD KARO ---
+app.use("/api/admin", startConnection, adminRoutes);
 
 // 3. Payment Routes
 app.use("/api/payment", startConnection, paymentRoutes);

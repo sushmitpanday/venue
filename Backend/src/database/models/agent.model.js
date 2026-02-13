@@ -18,6 +18,21 @@ const agentSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    city: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    state: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    pincode: {
+        type: String,
+        required: true,
+        trim: true
+    },
     // --- Naye Fields Jo Aapne Maange Hain ---
     phone: {
         type: String,
