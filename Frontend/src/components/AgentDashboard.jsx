@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, IndianRupee, PlusCircle, List, Trash2, ShieldCheck, Image as ImageIcon, LogOut, LayoutDashboard } from 'lucide-react';
+import { MapPin, IndianRupee, PlusCircle, List, Trash2, Edit3, X, ShieldCheck, Image as ImageIcon, LogOut, LayoutDashboard } from 'lucide-react';
 
 const AgentDashboard = () => {
     const navigate = useNavigate();
     const API_BASE = window.location.hostname === "localhost" 
         ? "http://localhost:3000" 
-        : "https://venue-ldog.vercel.app";
+        : "https://venue-ed3y.vercel.app";
     
-    const [activeTab, setActiveTab] = useState('view'); // 'view' or 'add'
+    const [activeTab, setActiveTab] = useState('view'); 
     const [myVenues, setMyVenues] = useState([]);
     const [loading, setLoading] = useState(false);
     const [agentName, setAgentName] = useState("Agent");
+    const [editingVenue, setEditingVenue] = useState(null); // Edit ke liye state
     
-    // Venue Data State
     const [venueData, setVenueData] = useState({
         name: '', price: '', city: '', state: '', address: '', image: ''
     });
 
-    // 1. Fetch Agent's Venues
     const fetchAgentVenues = async () => {
         const token = localStorage.getItem('token');
         try {
@@ -44,7 +43,6 @@ const AgentDashboard = () => {
         }
     }, [navigate]);
 
-    // 2. Handle Register Venue
     const handleSaveVenue = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -70,7 +68,23 @@ const AgentDashboard = () => {
         } finally { setLoading(false); }
     };
 
-    // 3. Handle Delete Venue
+    // --- AGENT UPDATE LOGIC ---
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        try {
+            await axios.put(`${API_BASE}/api/venue/${editingVenue._id}`, editingVenue, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert("✅ Property Updated Successfully!");
+            setEditingVenue(null);
+            fetchAgentVenues();
+        } catch (err) {
+            alert("❌ Update failed!");
+        } finally { setLoading(false); }
+    };
+
     const handleDelete = async (id) => {
         if (window.confirm("Delete this venue from your listing?")) {
             const token = localStorage.getItem('token');
@@ -88,7 +102,7 @@ const AgentDashboard = () => {
 
     return (
         <div className="min-h-screen bg-black text-white font-sans">
-            {/* Navbar (Same Design) */}
+            {/* Navbar */}
             <nav className="border-b border-zinc-900 bg-zinc-950/50 backdrop-blur-md px-6 py-4 flex justify-between items-center sticky top-0 z-50">
                 <div className="flex items-center gap-2">
                     <div className="w-10 h-10 bg-cyan-500/20 rounded-xl flex items-center justify-center border border-cyan-500/30">
@@ -108,8 +122,7 @@ const AgentDashboard = () => {
             </nav>
 
             <div className="max-w-6xl mx-auto p-6 md:p-10">
-                
-                {/* Tab Navigation (Matching Owner Style) */}
+                {/* Tab Navigation */}
                 <div className="flex max-w-sm mx-auto gap-2 mb-12 bg-zinc-900/50 p-1.5 rounded-[1.5rem] border border-zinc-800">
                     <button onClick={() => setActiveTab('view')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-[1rem] font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'view' ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20' : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800'}`}>
                         <List size={16}/> Listed Venues
@@ -126,15 +139,17 @@ const AgentDashboard = () => {
                             myVenues.map((venue) => (
                                 <div key={venue._id} className="bg-zinc-950 rounded-[2.5rem] border border-zinc-900 relative group hover:border-cyan-500/30 transition-all overflow-hidden shadow-2xl">
                                     <div className="h-48 w-full relative">
-                                        <img 
-                                            src={venue.image || "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=500&q=60"} 
-                                            alt="venue" 
-                                            className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-500"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent opacity-80"></div>
-                                        <button onClick={() => handleDelete(venue._id)} className="absolute top-4 right-4 bg-black/60 backdrop-blur-md border border-white/10 p-2.5 rounded-2xl text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-xl">
-                                            <Trash2 size={16} />
-                                        </button>
+                                        <img src={venue.image || "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=500&q=60"} alt="venue" className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-500" />
+                                        
+                                        {/* Action Buttons (Edit and Delete) */}
+                                        <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                            <button onClick={() => setEditingVenue(venue)} className="bg-black/60 backdrop-blur-md border border-white/10 p-2.5 rounded-2xl text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all">
+                                                <Edit3 size={16} />
+                                            </button>
+                                            <button onClick={() => handleDelete(venue._id)} className="bg-black/60 backdrop-blur-md border border-white/10 p-2.5 rounded-2xl text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-xl">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="p-7">
                                         <h3 className="text-lg font-black uppercase tracking-tight mb-2 text-zinc-100">{venue.name}</h3>
@@ -159,53 +174,47 @@ const AgentDashboard = () => {
                 {/* --- TAB 2: REGISTER FORM --- */}
                 {activeTab === 'add' && (
                     <div className="max-w-xl mx-auto bg-zinc-950 p-10 rounded-[3rem] border border-zinc-900 shadow-2xl relative">
-                        <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 bg-cyan-500 text-black px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
-                            Agent Listing
-                        </div>
-                        <h2 className="text-2xl font-black mb-10 text-white uppercase tracking-tighter italic flex items-center gap-3">
-                            New <span className="text-cyan-400">Property</span>
-                        </h2>
+                        <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 bg-cyan-500 text-black px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">Agent Listing</div>
+                        <h2 className="text-2xl font-black mb-10 text-white uppercase tracking-tighter italic flex items-center gap-3">New <span className="text-cyan-400">Property</span></h2>
                         <form onSubmit={handleSaveVenue} className="space-y-5">
-                            <div className="space-y-1">
-                                <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest ml-4">Venue Title</label>
-                                <input type="text" placeholder="e.g. Royal Agent Suite" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold transition-all" value={venueData.name} onChange={(e) => setVenueData({...venueData, name: e.target.value})} required />
-                            </div>
-                            
-                            <div className="space-y-1">
-                                <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest ml-4">Photo URL</label>
-                                <div className="relative group">
-                                    <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-700 group-focus-within:text-cyan-400" size={14} />
-                                    <input type="text" placeholder="https://image-url.com" className="w-full p-4 pl-12 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold text-cyan-400 transition-all" value={venueData.image} onChange={(e) => setVenueData({...venueData, image: e.target.value})} />
-                                </div>
-                            </div>
-
+                            <input type="text" placeholder="Venue Title" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold transition-all" value={venueData.name} onChange={(e) => setVenueData({...venueData, name: e.target.value})} required />
+                            <input type="text" placeholder="Photo URL" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold text-cyan-400 transition-all" value={venueData.image} onChange={(e) => setVenueData({...venueData, image: e.target.value})} />
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest ml-4">Price (₹)</label>
-                                    <div className="relative group">
-                                        <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-700 group-focus-within:text-cyan-400" size={14} />
-                                        <input type="number" placeholder="0" className="w-full p-4 pl-12 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold transition-all" value={venueData.price} onChange={(e) => setVenueData({...venueData, price: e.target.value})} required />
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest ml-4">City</label>
-                                    <input type="text" placeholder="LOCATION" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold transition-all" value={venueData.city} onChange={(e) => setVenueData({...venueData, city: e.target.value})} required />
-                                </div>
+                                <input type="number" placeholder="Price (₹)" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold transition-all" value={venueData.price} onChange={(e) => setVenueData({...venueData, price: e.target.value})} required />
+                                <input type="text" placeholder="City" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold transition-all" value={venueData.city} onChange={(e) => setVenueData({...venueData, city: e.target.value})} required />
                             </div>
-
-                            <div className="space-y-1">
-                                <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest ml-4">State & Full Address</label>
-                                <input type="text" placeholder="STATE" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold mb-3 transition-all" value={venueData.state} onChange={(e) => setVenueData({...venueData, state: e.target.value})} required />
-                                <textarea placeholder="FULL ADDRESS DETAILS" rows="3" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold transition-all" value={venueData.address} onChange={(e) => setVenueData({...venueData, address: e.target.value})} required></textarea>
-                            </div>
-                            
-                            <button disabled={loading} className="w-full bg-cyan-500 text-black py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[12px] hover:bg-cyan-400 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 mt-4 shadow-xl shadow-cyan-500/20">
-                                {loading ? "PROCESSING..." : "LIST AS AGENT"}
-                            </button>
+                            <input type="text" placeholder="State" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold mb-3" value={venueData.state} onChange={(e) => setVenueData({...venueData, state: e.target.value})} required />
+                            <textarea placeholder="Address Details" rows="3" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold transition-all" value={venueData.address} onChange={(e) => setVenueData({...venueData, address: e.target.value})} required></textarea>
+                            <button disabled={loading} className="w-full bg-cyan-500 text-black py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[12px] hover:bg-cyan-400 transition-all shadow-xl shadow-cyan-500/20">{loading ? "PROCESSING..." : "LIST AS AGENT"}</button>
                         </form>
                     </div>
                 )}
             </div>
+
+            {/* --- AGENT EDIT MODAL (POP-UP) --- */}
+            {editingVenue && (
+                <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
+                    <div className="bg-zinc-950 p-8 rounded-[2.5rem] w-full max-w-md border border-zinc-800 shadow-2xl">
+                        <div className="flex justify-between items-center mb-8">
+                            <h2 className="font-black uppercase text-lg italic text-cyan-400">Edit Property</h2>
+                            <button onClick={() => setEditingVenue(null)} className="text-zinc-500 hover:text-white transition-colors"><X/></button>
+                        </div>
+                        <form onSubmit={handleUpdate} className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest ml-2">Title</label>
+                                <input className="w-full p-4 bg-zinc-900 rounded-2xl border border-zinc-800 text-sm outline-none focus:border-cyan-500 transition-all font-bold" value={editingVenue.name} onChange={e => setEditingVenue({...editingVenue, name: e.target.value})} />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest ml-2">Price (₹)</label>
+                                <input className="w-full p-4 bg-zinc-900 rounded-2xl border border-zinc-800 text-sm outline-none focus:border-cyan-500 transition-all font-bold" value={editingVenue.price} onChange={e => setEditingVenue({...editingVenue, price: e.target.value})} />
+                            </div>
+                            <button disabled={loading} type="submit" className="w-full bg-cyan-500 text-black py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-cyan-400 transition-all mt-4">
+                                {loading ? "SAVING..." : "UPDATE PROPERTY"}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

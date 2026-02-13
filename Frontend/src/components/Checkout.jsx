@@ -9,39 +9,39 @@ const Checkout = () => {
         date: ''
     });
 
-    // --- DYNAMIC API BASE (Vercel Fix) ---
+    // --- DYNAMIC API BASE ---
     const API_BASE = window.location.hostname === "localhost" 
-        ? "http://localhost:3000" // Aapka local backend port
-        : "https://venue-ldog.vercel.app"; // Aapka production backend URL
+        ? "http://localhost:3000/api/payment" 
+        : "https://venue-ed3y.vercel.app/api/payment";
 
     const amount = 5000; 
 
     const handlePayment = async () => {
-        // 1. Check if Razorpay script is loaded
         if (!window.Razorpay) {
-            alert("Razorpay SDK failed to load. Are you online?");
+            alert("Razorpay SDK failed to load.");
             return;
         }
 
         setLoading(true);
 
         try {
-            // 2. Backend se Order ID mangwayein
-            const { data: order } = await axios.post(`${API_BASE}/create-order`, { 
-                amount: amount * 100 // Razorpay expects paise
+            // 1. Backend se Order ID mangwayein (/order wala path)
+            const { data } = await axios.post(`${API_BASE}/order`, { 
+                amount: amount 
             });
 
+            if (!data.success) throw new Error("Order creation failed");
+
             const options = {
-                // IMPORTANT: Replace with your actual Key ID from Razorpay Dashboard
-                key: "YOUR_RAZORPAY_KEY_ID", 
-                amount: order.amount,
+                // IMPORTANT: Apni rzp_test_... wali key yahan dalo
+                key: "rzp_test_SAKmorS3sIeBRc", 
+                amount: data.order.amount,
                 currency: "INR",
                 name: "RENT MY VENUE",
-                description: "Booking Payment for Venue",
-                image: "https://your-logo-url.com/logo.png", // Optional logo
-                order_id: order.id,
+                description: "Booking Payment",
+                order_id: data.order.id, // Sahi ID mapping
                 handler: async (response) => {
-                    // 3. Payment Success: Database update
+                    // 2. Payment Success logic
                     try {
                         const finalData = {
                             ...bookingDetails,
@@ -51,79 +51,55 @@ const Checkout = () => {
                             amount: amount
                         };
                         
+                        // Aapka confirmation route
                         const res = await axios.post(`${API_BASE}/learn`, finalData);
                         
                         if(res.status === 200 || res.status === 201) {
                             alert("✨ Booking Confirmed Successfully!");
                         }
                     } catch (err) {
-                        console.error("Database Update Error:", err);
-                        alert("Payment Success, but failed to save booking. Please contact support.");
+                        alert("Payment successful but booking failed to save.");
                     }
                 },
-                prefill: {
-                    name: bookingDetails.name,
-                    email: "user@example.com", // Optional: User email
-                    contact: "9999999999"      // Optional: User phone
-                },
-                theme: { color: "#06b6d4" }, // Cyan color matching your theme
-                modal: {
-                    ondismiss: function() {
-                        setLoading(false);
-                    }
-                }
+                theme: { color: "#06b6d4" }
             };
 
             const rzp = new window.Razorpay(options);
             rzp.open();
 
         } catch (error) {
-            console.error("Order Creation Error:", error);
-            alert("❌ Server Error: Could not initiate payment.");
+            console.error("Payment Error:", error);
+            alert("❌ Error: " + (error.response?.data?.message || "Could not initiate payment."));
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6 font-sans">
-            <div className="max-w-md w-full bg-zinc-950 border border-zinc-900 p-8 rounded-[2.5rem] shadow-2xl">
-                <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-6 border-b-2 border-cyan-500 inline-block">
+        <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
+            <div className="max-w-md w-full bg-zinc-950 border border-zinc-900 p-8 rounded-[2.5rem]">
+                <h2 className="text-2xl font-black italic uppercase mb-6 border-b-2 border-cyan-500 inline-block">
                     Confirm Booking
                 </h2>
                 
                 <div className="space-y-4">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-zinc-500 ml-2">Full Name</label>
-                        <input 
-                            type="text" 
-                            placeholder="Enter your name" 
-                            className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-sm outline-none focus:border-cyan-500 transition-all"
-                            onChange={(e) => setBookingDetails({...bookingDetails, name: e.target.value})} 
-                        />
-                    </div>
+                    <input 
+                        type="text" 
+                        placeholder="Full Name" 
+                        className="w-full p-4 bg-zinc-900 rounded-2xl outline-none focus:border-cyan-500 border border-transparent"
+                        onChange={(e) => setBookingDetails({...bookingDetails, name: e.target.value})} 
+                    />
 
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-zinc-500 ml-2">Booking Date</label>
-                        <input 
-                            type="date" 
-                            className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-sm outline-none focus:border-cyan-500 transition-all text-white"
-                            onChange={(e) => setBookingDetails({...bookingDetails, date: e.target.value})} 
-                        />
-                    </div>
-
-                    <div className="p-4 bg-cyan-500/5 border border-cyan-500/20 rounded-2xl flex justify-between items-center mt-6">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Total Payable</span>
+                    <div className="p-4 bg-cyan-500/5 border border-cyan-500/20 rounded-2xl flex justify-between items-center">
                         <span className="text-xl font-black text-cyan-400">₹{amount}</span>
                     </div>
 
                     <button 
                         onClick={handlePayment} 
                         disabled={loading || !bookingDetails.name}
-                        className={`w-full py-5 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all shadow-lg mt-4 
-                            ${loading ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-500 text-black shadow-cyan-500/20 active:scale-95'}`}
+                        className="w-full py-5 rounded-2xl font-black bg-cyan-600 hover:bg-cyan-500 text-black uppercase"
                     >
-                        {loading ? "Processing..." : "Pay Now & Confirm"}
+                        {loading ? "Processing..." : "Pay Now"}
                     </button>
                 </div>
             </div>

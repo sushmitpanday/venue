@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, User, UserPlus, ArrowRight, Phone, MapPin, Briefcase, CreditCard } from 'lucide-react';
+import { Mail, Lock, User, UserPlus, ArrowRight, Phone, MapPin, Briefcase, CreditCard, Globe } from 'lucide-react';
 
 const API_BASE = window.location.hostname === "localhost" 
     ? "http://localhost:3000" 
-    : "https://venue-ldog.vercel.app";
+    : "https://venue-ed3y.vercel.app";
 
 const AgentRegister = () => {
     const [firstName, setFirstName] = useState('');
@@ -14,6 +14,9 @@ const AgentRegister = () => {
     const [password, setPassword] = useState('');
     const [phone, setPhone] = useState('');
     const [address, setAddress] = useState('');
+    const [city, setCity] = useState('');      // Naya state
+    const [state, setState] = useState('');    // Naya state
+    const [pincode, setPincode] = useState(''); // Naya state
     const [occupation, setOccupation] = useState('');
     const [idType, setIdType] = useState('Aadhar');
     const [idNumber, setIdNumber] = useState('');
@@ -28,9 +31,12 @@ const AgentRegister = () => {
             const payload = {
                 fullname: `${firstName} ${lastName}`,
                 email,
-                password, // Note: Agent model handles hashing via pre-save hook
+                password,
                 phone,
                 address,
+                city,      // Payload me add kiya
+                state,     // Payload me add kiya
+                pincode,   // Payload me add kiya
                 occupation,
                 govtIdType: idType,
                 govtIdNumber: idNumber
@@ -73,10 +79,22 @@ const AgentRegister = () => {
                     
                     <div className="grid grid-cols-2 gap-4">
                         <input type="tel" placeholder="PHONE" className="input-style-purple" onChange={(e) => setPhone(e.target.value)} required />
-                        <input type="text" placeholder="SPECIALIZATION / OCCUPATION" className="input-style-purple" onChange={(e) => setOccupation(e.target.value)} required />
+                        <input type="text" placeholder="SPECIALIZATION" className="input-style-purple" onChange={(e) => setOccupation(e.target.value)} required />
                     </div>
 
-                    {/* Govt ID Selection */}
+                    {/* NEW: City & State Grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="relative group">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-purple-400" size={14} />
+                            <input type="text" placeholder="CITY" className="input-style-purple pl-10" onChange={(e) => setCity(e.target.value)} required />
+                        </div>
+                        <div className="relative group">
+                            <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-purple-400" size={14} />
+                            <input type="text" placeholder="STATE" className="input-style-purple pl-10" onChange={(e) => setState(e.target.value)} required />
+                        </div>
+                    </div>
+
+                    {/* Govt ID & Pincode Selection */}
                     <div className="grid grid-cols-3 gap-4">
                         <select 
                             className="input-style-purple col-span-1 appearance-none cursor-pointer"
@@ -86,18 +104,21 @@ const AgentRegister = () => {
                             <option value="Aadhar">AADHAR</option>
                             <option value="PAN">PAN CARD</option>
                             <option value="VoterID">VOTER ID</option>
-                            <option value="Driving">DL</option>
                         </select>
-                        <div className="relative col-span-2 group">
-                            <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-purple-400" size={16} />
-                            <input 
-                                type="text" 
-                                placeholder="GOVT ID NUMBER" 
-                                className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-3 pl-12 pr-4 text-white text-xs font-bold outline-none focus:border-purple-500/50 transition-all" 
-                                onChange={(e) => setIdNumber(e.target.value)} 
-                                required 
-                            />
-                        </div>
+                        <input 
+                            type="text" 
+                            placeholder="GOVT ID NO." 
+                            className="input-style-purple col-span-1" 
+                            onChange={(e) => setIdNumber(e.target.value)} 
+                            required 
+                        />
+                        <input 
+                            type="text" 
+                            placeholder="PINCODE" 
+                            className="input-style-purple col-span-1" 
+                            onChange={(e) => setPincode(e.target.value)} 
+                            required 
+                        />
                     </div>
 
                     <textarea placeholder="OFFICE / HOME ADDRESS" rows="2" className="input-style-purple pt-3" onChange={(e) => setAddress(e.target.value)} required></textarea>

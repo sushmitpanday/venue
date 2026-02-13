@@ -5,7 +5,7 @@ const AdminDirectLogin = () => {
     // 1. API_BASE logic yahan bhi use karein
     const API_BASE = window.location.hostname === "localhost" 
         ? "http://localhost:3000" 
-        : "https://venue-ldog.vercel.app";
+        : "https://venue-ed3y.vercel.app";
 
     useEffect(() => {
         const autoLogin = async () => {
