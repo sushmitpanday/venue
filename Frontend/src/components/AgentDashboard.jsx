@@ -7,17 +7,33 @@ const AgentDashboard = () => {
     const navigate = useNavigate();
     const API_BASE = window.location.hostname === "localhost" 
         ? "http://localhost:3000" 
-        : "https://venue-ed3y.vercel.app";
+        : "https://venue-q34h.vercel.app";
     
     const [activeTab, setActiveTab] = useState('view'); 
     const [myVenues, setMyVenues] = useState([]);
     const [loading, setLoading] = useState(false);
     const [agentName, setAgentName] = useState("Agent");
-    const [editingVenue, setEditingVenue] = useState(null); // Edit ke liye state
+    const [editingVenue, setEditingVenue] = useState(null); 
     
     const [venueData, setVenueData] = useState({
         name: '', price: '', city: '', state: '', address: '', image: ''
     });
+
+    // GALLERY SE IMAGE SELECT KARNE KA LOGIC
+    const handleImageChange = (e, isEditing = false) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                if (isEditing) {
+                    setEditingVenue({ ...editingVenue, image: reader.result });
+                } else {
+                    setVenueData({ ...venueData, image: reader.result });
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const fetchAgentVenues = async () => {
         const token = localStorage.getItem('token');
@@ -68,7 +84,6 @@ const AgentDashboard = () => {
         } finally { setLoading(false); }
     };
 
-    // --- AGENT UPDATE LOGIC ---
     const handleUpdate = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -141,7 +156,6 @@ const AgentDashboard = () => {
                                     <div className="h-48 w-full relative">
                                         <img src={venue.image || "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=500&q=60"} alt="venue" className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-500" />
                                         
-                                        {/* Action Buttons (Edit and Delete) */}
                                         <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
                                             <button onClick={() => setEditingVenue(venue)} className="bg-black/60 backdrop-blur-md border border-white/10 p-2.5 rounded-2xl text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all">
                                                 <Edit3 size={16} />
@@ -178,7 +192,20 @@ const AgentDashboard = () => {
                         <h2 className="text-2xl font-black mb-10 text-white uppercase tracking-tighter italic flex items-center gap-3">New <span className="text-cyan-400">Property</span></h2>
                         <form onSubmit={handleSaveVenue} className="space-y-5">
                             <input type="text" placeholder="Venue Title" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold transition-all" value={venueData.name} onChange={(e) => setVenueData({...venueData, name: e.target.value})} required />
-                            <input type="text" placeholder="Photo URL" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold text-cyan-400 transition-all" value={venueData.image} onChange={(e) => setVenueData({...venueData, image: e.target.value})} />
+                            
+                            {/* UPDATED: IMAGE PICKER FROM GALLERY */}
+                            <label className="flex flex-col items-center justify-center w-full h-32 bg-zinc-900 border border-zinc-800 border-dashed rounded-2xl cursor-pointer hover:border-cyan-500 transition-all overflow-hidden relative">
+                                {venueData.image ? (
+                                    <img src={venueData.image} alt="preview" className="w-full h-full object-cover opacity-60" />
+                                ) : (
+                                    <div className="flex flex-col items-center">
+                                        <ImageIcon className="text-zinc-600 mb-2" size={24} />
+                                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Select From Gallery</span>
+                                    </div>
+                                )}
+                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, false)} />
+                            </label>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <input type="number" placeholder="Price (₹)" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold transition-all" value={venueData.price} onChange={(e) => setVenueData({...venueData, price: e.target.value})} required />
                                 <input type="text" placeholder="City" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold transition-all" value={venueData.city} onChange={(e) => setVenueData({...venueData, city: e.target.value})} required />
@@ -191,7 +218,7 @@ const AgentDashboard = () => {
                 )}
             </div>
 
-            {/* --- AGENT EDIT MODAL (POP-UP) --- */}
+            {/* --- AGENT EDIT MODAL --- */}
             {editingVenue && (
                 <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
                     <div className="bg-zinc-950 p-8 rounded-[2.5rem] w-full max-w-md border border-zinc-800 shadow-2xl">
@@ -204,6 +231,19 @@ const AgentDashboard = () => {
                                 <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest ml-2">Title</label>
                                 <input className="w-full p-4 bg-zinc-900 rounded-2xl border border-zinc-800 text-sm outline-none focus:border-cyan-500 transition-all font-bold" value={editingVenue.name} onChange={e => setEditingVenue({...editingVenue, name: e.target.value})} />
                             </div>
+
+                            {/* UPDATED: EDIT MODAL GALLERY PICKER */}
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest ml-2">Property Image</label>
+                                <label className="flex flex-col items-center justify-center w-full h-24 bg-zinc-900 border border-zinc-800 border-dashed rounded-2xl cursor-pointer hover:border-cyan-500 overflow-hidden relative">
+                                    <img src={editingVenue.image} alt="preview" className="w-full h-full object-cover opacity-50" />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <ImageIcon className="text-white" size={20} />
+                                    </div>
+                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, true)} />
+                                </label>
+                            </div>
+
                             <div className="space-y-1">
                                 <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest ml-2">Price (₹)</label>
                                 <input className="w-full p-4 bg-zinc-900 rounded-2xl border border-zinc-800 text-sm outline-none focus:border-cyan-500 transition-all font-bold" value={editingVenue.price} onChange={e => setEditingVenue({...editingVenue, price: e.target.value})} />
