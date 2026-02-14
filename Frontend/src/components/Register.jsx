@@ -5,7 +5,7 @@ import { User, Mail, Lock, UserPlus, ArrowRight, MapPin, Phone, Briefcase, Credi
 
 const API_BASE = window.location.hostname === "localhost" 
   ? "http://localhost:3000" 
-  : "https://venue-neon.vercel.app";
+  : "https://venue-386d.vercel.app";
 
 const Register = () => {
   const [firstName, setFirstName] = useState('');

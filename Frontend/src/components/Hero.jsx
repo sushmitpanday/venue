@@ -17,14 +17,14 @@ const Hero = () => {
       id: 1, 
       title: "Enjoy Luxury", 
       span: "Experience", 
-      sub: "premium married lawn", 
+      sub: "BOOK YOUR PREMIUM MARRIAGE LAWN", 
       img: Img1 
     },
     { 
       id: 2, 
       title: "Modern Stay", 
       span: "Comfort", 
-      sub: "premium married lawn", 
+      sub: "BOOK YOUR PREMIUM MARRIAGE LAWN", 
       img: Img2 
     },
   ];
