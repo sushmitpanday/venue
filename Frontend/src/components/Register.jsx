@@ -5,7 +5,7 @@ import { User, Mail, Lock, UserPlus, ArrowRight, MapPin, Phone, Briefcase, Credi
 
 const API_BASE = window.location.hostname === "localhost" 
   ? "http://localhost:3000" 
-  : "https://venue-q34h.vercel.app";
+  : "https://venue-fzah.vercel.app";
 
 const Register = () => {
   const [firstName, setFirstName] = useState('');
@@ -61,7 +61,7 @@ const Register = () => {
             <UserPlus className="text-cyan-400" size={30} />
           </div>
           <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">
-            Owner <span className="text-cyan-400">Verification</span>
+            USER <span className="text-cyan-400">Verification</span>
           </h2>
         </div>
 

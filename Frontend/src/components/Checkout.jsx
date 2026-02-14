@@ -12,7 +12,7 @@ const Checkout = () => {
     // --- DYNAMIC API BASE ---
     const API_BASE = window.location.hostname === "localhost" 
         ? "http://localhost:3000/api/payment" 
-        : "https://venue-q34h.vercel.app/api/payment";
+        : "https://venue-fzah.vercel.app/api/payment";
 
     const amount = 5000; 
 
