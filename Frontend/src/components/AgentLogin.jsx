@@ -5,7 +5,7 @@ import { Mail, Lock, LogIn, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const API_BASE = window.location.hostname === "localhost" 
     ? "http://localhost:3000" 
-    : "https://venue-fzah.vercel.app";
+    : "https://venue-neon.vercel.app";
 
 const AgentLogin = () => {
     const [email, setEmail] = useState('');

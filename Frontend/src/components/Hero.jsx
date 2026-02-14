@@ -4,8 +4,8 @@ import { Autoplay, EffectFade } from 'swiper/modules';
 import { FaCalendarAlt, FaMapMarkerAlt, FaSearch, FaSlidersH } from 'react-icons/fa';
 
 // Images
-import Img1 from '../../public/slider-1-1.jpg';
-import Img2 from '../../public/slider-1-1.jpg';
+import Img1 from '../../public/image copy 2.png';
+import Img2 from '../../public/image copy 2.png';
 
 // Swiper styles
 import 'swiper/css';
@@ -17,14 +17,14 @@ const Hero = () => {
       id: 1, 
       title: "Enjoy Luxury", 
       span: "Experience", 
-      sub: "The best 5 star hotel", 
+      sub: "premium married lawn", 
       img: Img1 
     },
     { 
       id: 2, 
       title: "Modern Stay", 
       span: "Comfort", 
-      sub: "Redefining hospitality", 
+      sub: "premium married lawn", 
       img: Img2 
     },
   ];
