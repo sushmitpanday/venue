@@ -1,15 +1,12 @@
-// Pehle ye tha: const app = require('./app');
-// Ise badal kar ye karein (kyunki app.js shayad src ke andar hai):
-const app = require('./src/app');
+// 1. Sabse pehle dotenv load karo
+require('dotenv').config();
 
-// Agar app.js 'src' folder ke andar hai, toh aise likhein:
-// const app = require('./src/app'); 
-
-const dbconnection = require('./src/database/db'); // Agar db.js aur server.js ek hi folder mein hain
-const dotenv = require('dotenv');
-
-dotenv.config();
+// 2. Phir database connect karo
+const dbconnection = require('./src/database/db');
 dbconnection();
+
+// 3. AB app ko require karo (Isse app ko saari keys mil jayengi)
+const app = require('./src/app');
 
 const PORT = process.env.PORT || 5000;
 

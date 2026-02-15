@@ -9,6 +9,7 @@ const CookieParser = require('cookie-parser');
 const cors = require('cors');
 const connectDB = require('./database/db');
 const Venue = require('./database/models/venue.model');
+const bookingRoutes = require('./Routes/booking.routes.js');
 
 // Middleware
 app.use(express.json({ limit: '50mb' }));
@@ -18,7 +19,8 @@ app.use(cors({
     origin: true,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization", "x-rtb-fingerprint-id"],
+    exposedHeaders: ["x-rtb-fingerprint-id"]
 }));
 
 // DB Connection Wrapper (Reusable)
@@ -45,6 +47,8 @@ app.use("/api/admin", startConnection, adminRoutes);
 
 // 3. Payment Routes
 app.use("/api/payment", startConnection, paymentRoutes);
+
+app.use("/api/booking", startConnection, bookingRoutes);
 
 // Search API
 app.get('/api/search', startConnection, async(req, res) => {
