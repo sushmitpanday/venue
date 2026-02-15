@@ -20,7 +20,7 @@ const VenueDetial = () => {
 
     const API_BASE = window.location.hostname === "localhost" 
         ? "http://localhost:3000" 
-        : "https://venue-386d.vercel.app";
+        : "https://venue-sooty.vercel.app";
 
     useEffect(() => {
         const fetchVenueData = async () => {
