@@ -3,7 +3,7 @@ const Venue = require('../database/models/venue.model');
 // 1. Naya Hotel/Venue banane ke liye
 const createVenue = async(req, res) => {
     try {
-        const { name, location, price, description, contactNumber } = req.body;
+        const { name, location, price, description, contactNumber, images, capacity, rooms } = req.body;
         const finalOwnerId = req.user ? (req.user._id || req.user.id) : "65f1a2b3c4d5e6f7a8b9c0d1";
 
         const newVenue = new Venue({
@@ -12,8 +12,10 @@ const createVenue = async(req, res) => {
             price: Number(price),
             description,
             contactNumber,
-            image: req.body.image || "",
-            ownerId: finalOwnerId
+            images: images || [],
+            ownerId: finalOwnerId,
+            capacity: Number(capacity) || 0, // 2. Yahan add kiya (Number mein convert karke)
+            rooms: Number(rooms) || 0
         });
 
         await newVenue.save();

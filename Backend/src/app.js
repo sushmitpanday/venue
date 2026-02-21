@@ -3,13 +3,13 @@ const app = express();
 const authrouters = require('./Routes/auth.routes');
 const venueRouters = require('./Routes/venue.routes');
 const paymentRoutes = require('./Routes/payment.routes');
-// Pehle require karo (Ye line upar baki imports ke sath dalo)
 const adminRoutes = require('./Routes/admin.routes');
 const CookieParser = require('cookie-parser');
 const cors = require('cors');
 const connectDB = require('./database/db');
 const Venue = require('./database/models/venue.model');
-const bookingRoutes = require('./Routes/booking.routes.js');
+
+// ❌ bookingRoutes wali line yahan se hata di gayi hai kyunki file delete ho chuki hai
 
 // Middleware
 app.use(express.json({ limit: '50mb' }));
@@ -23,7 +23,7 @@ app.use(cors({
     exposedHeaders: ["x-rtb-fingerprint-id"]
 }));
 
-// DB Connection Wrapper (Reusable)
+// DB Connection Wrapper
 const startConnection = async(req, res, next) => {
     await connectDB();
     next();
@@ -35,20 +35,19 @@ app.get("/", (req, res) => {
 
 // --- ROUTES REGISTRATION ---
 
-// 1. Auth Routes (Ab isi ke andar Agent, Owner, aur Admin sab hain)
-// Frontend path: /api/auth/agent/login etc.
+// 1. Auth Routes
 app.use("/api/auth", startConnection, authrouters);
 
 // 2. Venue Routes
 app.use("/api/venue", startConnection, venueRouters);
 
-// --- YEH WALI LINE ADD KARO ---
+// 3. Admin Routes
 app.use("/api/admin", startConnection, adminRoutes);
 
-// 3. Payment Routes
+// 4. Payment Routes (Isi ke andar Payment aur Booking dono ka logic hai ab)
 app.use("/api/payment", startConnection, paymentRoutes);
 
-app.use("/api/booking", startConnection, bookingRoutes);
+// ❌ app.use("/api/booking", ...) wali line hata di gayi hai
 
 // Search API
 app.get('/api/search', startConnection, async(req, res) => {

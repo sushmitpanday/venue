@@ -2,9 +2,9 @@ const jwt = require('jsonwebtoken');
 
 const authMiddleware = (req, res, next) => {
     const authHeader = req.header('Authorization');
-    if (!authHeader) return res.status(401).json({ message: "Login karein pehle!" });
+    if (!authHeader) return res.status(401).json({ message: "Pehle login karein!" });
 
-    const token = authHeader.split(' ')[1]; // Space error fix
+    const token = authHeader.split(' ')[1];
     if (!token) return res.status(401).json({ message: "Token missing!" });
 
     try {

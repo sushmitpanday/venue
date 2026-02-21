@@ -1,34 +1,44 @@
-// Backend Route: POST /api/venue/book
-router.post("/book", async(req, res) => {
-    try {
-        const {
-            venueId,
-            bookingDate,
-            amount,
-            razorpay_payment_id,
-            userEmail
-        } = req.body;
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
+const Booking = require('../database/models/booking.model');
+const Payment = require('../database/models/payment.model');
 
-        // 1. Pehle check karo ki is date par ye venue pehle se booked toh nahi hai
-        const existingBooking = await Booking.findOne({ venueId, bookingDate });
-        if (existingBooking) {
-            return res.status(400).json({ message: "Bhai, ye date toh pehle hi booked hai!" });
-        }
-
-        // 2. New Booking create karo (Tera Schema jo bhi ho)
-        const newBooking = new Booking({
-            venueId,
-            userEmail,
-            date: bookingDate,
-            paymentId: razorpay_payment_id,
-            totalAmount: amount,
-            status: "Confirmed"
-        });
-
-        await newBooking.save();
-        res.status(201).json({ success: true, message: "Booking saved!" });
-
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+const instance = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
 });
+
+const checkout = async(req, res) => {
+    try {
+        const options = {
+            amount: Math.round(Number(req.body.amount) * 100),
+            currency: "INR",
+            receipt: `rcpt_${Date.now()}`
+        };
+        const order = await instance.orders.create(options);
+        res.status(200).json({ success: true, order });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+const verifyAndSave = async(req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, venueId, userEmail, date, amount } = req.body;
+        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        const expectedSignature = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET).update(body.toString()).digest("hex");
+
+        if (expectedSignature === razorpay_signature) {
+            await Payment.create({ razorpay_order_id, razorpay_payment_id, razorpay_signature, userId: req.user.id, amount });
+            const booking = await Booking.create({ venueId, userId: req.user.id, userEmail, date, orderId: razorpay_order_id, paymentId: razorpay_payment_id, totalAmount: amount });
+            res.status(200).json({ success: true, message: "Booking Confirmed!", booking });
+        } else {
+            res.status(400).json({ success: false, message: "Invalid Signature!" });
+        }
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// YAHAN SE EXPORT HONA ZAROORI HAI
+module.exports = { checkout, verifyAndSave };
