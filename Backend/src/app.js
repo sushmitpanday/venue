@@ -71,9 +71,12 @@ app.get('/api/search', startConnection, async(req, res) => {
     }
 });
 
-module.exports = app;
+// --- SERVER START (REMOVED PRODUCTION CHECK) ---
+const PORT = process.env.PORT || 10000;
 
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => console.log(`✅ Server on http://localhost:${PORT}`));
-}
+// Render ke liye '0.0.0.0' par listen karna zaroori hai
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Server is live on port ${PORT}`);
+});
+
+module.exports = app;
