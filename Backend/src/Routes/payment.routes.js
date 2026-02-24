@@ -1,10 +1,16 @@
 const express = require('express');
 const router = express.Router();
-// Path check karo: Routes se ek folder bahar (src) phir controllers mein
-const bookingController = require('../controllers/booking.controllder');
-const authMiddleware = require('../../middlewares/booking.middleware');
+const paymentController = require('../controllers/payment.controller');
+// verifyToken agar hai toh import karo, nahi toh hata dena niche se
+const { verifyToken } = require('../middlewares/auth.middleware');
 
-router.post("/checkout", authMiddleware, bookingController.checkout);
-router.post("/verify", authMiddleware, bookingController.verifyAndSave);
+// 1. Checkout
+router.post('/checkout', paymentController.checkout);
+
+// 2. Verify (Idhar galti thi, maine fix kar di)
+router.post('/verify', paymentController.verifyAndSave);
+
+// 3. Admin: Get All
+router.get('/all-payments', paymentController.getAllPayments);
 
 module.exports = router;
