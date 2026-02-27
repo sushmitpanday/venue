@@ -128,7 +128,7 @@ async function ownerlogin(req, res) {
     try {
         const { email, password } = req.body;
 
-        if (email === 'admin@gmail.com' && password === 'admin123') {
+        if (email === 'admin@rentmyvenue.com' && password === 'addysvenue') {
             const token = jwt.sign({ id: 'ADMIN_SUPER_ID', role: 'admin' }, SECRET, { expiresIn: '1d' });
             return res.status(200).json({
                 message: 'Admin Login successful',
