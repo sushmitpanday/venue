@@ -139,10 +139,10 @@ async function ownerlogin(req, res) {
         }
 
         const user = await usermodel.findOne({ email, role: 'owner' });
-        if (!user) return res.status(400).json({ message: 'Owner account nahi mila!' });
+        if (!user) return res.status(400).json({ message: 'Owner account is missing!' });
 
         const match = await bcrypt.compare(password, user.password);
-        if (!match) return res.status(400).json({ message: 'Galat password!' });
+        if (!match) return res.status(400).json({ message: 'Wrong password!' });
 
         const token = jwt.sign({ id: user._id, role: 'owner' }, SECRET, { expiresIn: '1d' });
         return res.status(200).json({ message: 'Login successful', token, role: 'owner', user });

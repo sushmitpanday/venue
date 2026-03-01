@@ -1,82 +1,86 @@
 const express = require('express');
-const app = express();
-const authrouters = require('./Routes/auth.routes');
-const venueRouters = require('./Routes/venue.routes');
-const paymentRoutes = require('./Routes/payment.routes');
-const adminRoutes = require('./Routes/admin.routes');
+const compression = require('compression'); // Response size chhota karne ke liye
+const helmet = require('helmet'); // Security aur performance headers ke liye
+const path = require('path');
 const CookieParser = require('cookie-parser');
 const cors = require('cors');
 const connectDB = require('./database/db');
 const Venue = require('./database/models/venue.model');
 
-// ❌ bookingRoutes wali line yahan se hata di gayi hai kyunki file delete ho chuki hai
+// Routes imports
+const authrouters = require('./Routes/auth.routes');
+const venueRouters = require('./Routes/venue.routes');
+const paymentRoutes = require('./Routes/payment.routes');
+const adminRoutes = require('./Routes/admin.routes');
 
-// Middleware
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+const app = express();
+
+// 1. FAST LOADING MIDDLEWARES
+app.use(helmet()); // XSS attack rokta hai aur फालतू headers hatata hai
+app.use(compression()); // JSON aur static files ko "zip" karke bhejta hai (2x faster)
+
+// 2. DATABASE CONNECTION (Startup par hi connect karein)
+connectDB();
+
+// 3. BODY PARSING (Limit optimized)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(CookieParser());
+
+// 4. STATIC FILES CACHING (Images baar-baar download nahi hongi)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+    maxAge: '7d', // 7 din tak browser image cache rakhega
+    etag: true // Sirf tab download karega jab image change hogi
+}));
+
+// 5. CORS CONFIGURATION
 app.use(cors({
     origin: ["https://rentmyvenue.com", "https://www.rentmyvenue.com", "http://localhost:5173"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-rtb-fingerprint-id"],
-    exposedHeaders: ["x-rtb-fingerprint-id"]
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// DB Connection Wrapper
-const startConnection = async(req, res, next) => {
-    await connectDB();
-    next();
-};
+// 6. ROUTES REGISTRATION (Middleware hataya kyunki DB connect ho chuka hai)
+app.use("/api/auth", authrouters);
+app.use("/api/venue", venueRouters);
+app.use("/api/admin", adminRoutes);
+app.use("/api/payment", paymentRoutes);
 
 app.get("/", (req, res) => {
-    res.send('API is running...');
+    res.send('API is running fast! 🚀');
 });
 
-// --- ROUTES REGISTRATION ---
-
-// 1. Auth Routes
-app.use("/api/auth", startConnection, authrouters);
-
-// 2. Venue Routes
-app.use("/api/venue", startConnection, venueRouters);
-
-// 3. Admin Routes
-app.use("/api/admin", startConnection, adminRoutes);
-
-// 4. Payment Routes (Isi ke andar Payment aur Booking dono ka logic hai ab)
-app.use("/api/payment", startConnection, paymentRoutes);
-
-// ❌ app.use("/api/booking", ...) wali line hata di gayi hai
-
-// Search API
-app.get('/api/search', startConnection, async(req, res) => {
+// 7. SEARCH API (Performance Optimized)
+app.get('/api/search', async(req, res) => {
     try {
         const { query } = req.query;
         if (!query) return res.status(200).json([]);
 
         const searchRegex = { $regex: query.trim(), $options: 'i' };
+
+        // Sirf wahi fields mangwayein jo frontend par chahiye (.select)
         const results = await Venue.find({
-            $or: [
-                { "name": searchRegex },
-                { "location.city": searchRegex },
-                { "location.state": searchRegex }
-            ]
-        }).sort({ createdAt: -1 });
+                $or: [
+                    { "name": searchRegex },
+                    { "location.city": searchRegex },
+                    { "location.state": searchRegex }
+                ]
+            })
+            .select('name location price images capacity') // Extra fields skip karein
+            .limit(12) // Memory bachane ke liye limit lagayein
+            .lean(); // Mongoose object ko simple JSON banata hai (Very Fast)
 
         res.status(200).json(results);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Search failed", details: err.message });
+        res.status(500).json({ error: "Search failed" });
     }
 });
 
-// --- SERVER START (REMOVED PRODUCTION CHECK) ---
+// SERVER START
 const PORT = process.env.PORT || 10000;
-
-// Render ke liye '0.0.0.0' par listen karna zaroori hai
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Server is live on port ${PORT}`);
+    console.log(`✅ Server optimized & live on port ${PORT}`);
 });
 
 module.exports = app;
