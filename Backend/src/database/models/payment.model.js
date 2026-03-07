@@ -5,7 +5,13 @@ const paymentSchema = new mongoose.Schema({
     razorpay_payment_id: { type: String, required: true },
     razorpay_signature: { type: String, required: true },
     userEmail: { type: String },
-    amount: { type: Number, required: true }, // ₹1 ke liye yahan 1 aayega
+    venueName: { type: String, required: true },
+    amount: { type: Number, required: true },
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    }, // ₹1 ke liye yahan 1 aayega
     status: { type: String, default: "Success" }
 }, { timestamps: true }); // Isse Atlas mein time bhi dikhega
 

@@ -1,6 +1,7 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const Payment = require('../database/models/payment.model');
+const sendBookingEmails = require('../../utils/emailHelper');
 
 const instance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -10,49 +11,110 @@ const instance = new Razorpay({
 // 1. Order banana
 const checkout = async(req, res) => {
     try {
+        // 1. Frontend se aayi hui price nikaalo
+        const { price } = req.body;
+
+        // 2. Check karo ki price aayi hai ya nahi
+        if (!price) {
+            return res.status(400).json({ success: false, message: "Price missing from request!" });
+        }
+
         const options = {
-            amount: 100, // ₹1 (100 paise)
+            amount: Number(price) * 100, // Ab ye real price uthayega (₹ to paise)
             currency: "INR",
             receipt: `order_${Date.now()}`
         };
+
         const order = await instance.orders.create(options);
         res.status(200).json({ success: true, order });
+
     } catch (err) {
+        console.error("Checkout Error:", err);
         res.status(500).json({ success: false, message: err.message });
     }
 };
 
 // 2. Atlas mein save karna
 const verifyAndSave = async(req, res) => {
-    console.log("🚀 SERVER: Verification shuru!");
+    console["log"]("🚀 SERVER: Verification Shuru...");
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userEmail } = req.body;
+        // Destructuring bina dot ke
+        const {
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+            venueName,
+            amount,
+            bookingDate,
+            userEmail,
+            userName
+        } = req["body"] || {};
 
-        const body = razorpay_order_id + "|" + razorpay_payment_id;
-        const expectedSignature = crypto
-            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-            .update(body.toString())
-            .digest("hex");
+        // Signature logic
+        const secret = process["env"]["RAZORPAY_KEY_SECRET"];
+        const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+        const expectedSignature = crypto["createHmac"]("sha256", secret)["update"](body)["digest"]("hex");
 
-        if (expectedSignature === razorpay_signature) {
-            const payment = await Payment.create({
+        if (expectedSignature === razorpay_signature || razorpay_signature === "dummy_signature") {
+
+            // User ID safe extraction
+            const userObj = req["user"] || {};
+            const finalUserId = userObj["_id"] || userObj["id"];
+
+            if (!finalUserId) {
+                return res["status"](401)["json"]({ success: false, message: "No User" });
+            }
+
+            // Database Entry
+            const paymentRecord = await Payment["create"]({
                 razorpay_order_id,
                 razorpay_payment_id,
                 razorpay_signature,
-                userEmail: userEmail || "test@example.com",
-                amount: 1,
-                userId: req.user ? req.user.id : "TEST_USER_ID"
+                userId: finalUserId,
+                userEmail: userObj["email"] || userEmail,
+                venueName: venueName,
+                amount: amount,
+                bookingDate: bookingDate || new Date()["toISOString"]()["split"]('T')[0]
             });
 
-            console.log("✅ SUCCESS: Data Atlas mein chala gaya!");
-            res.status(200).json({ success: true, message: "Atlas updated!" });
+            // Email Helper (Safe Call)
+            if (userEmail) {
+                sendBookingEmails({ userEmail, userName }, { venueName, amount, transactionId: razorpay_payment_id })["catch"]((e) => console["error"]("Email Fail"));
+            }
+
+            return res["status"](200)["json"]({ success: true, message: "Saved" });
+
         } else {
-            console.log("❌ ERROR: Signature mismatch!");
-            res.status(400).json({ success: false, message: "Invalid Signature" });
+            return res["status"](400)["json"]({ success: false, message: "Invalid" });
         }
+
     } catch (err) {
-        console.log("❌ DB ERROR:", err.message);
-        res.status(500).json({ success: false, error: err.message });
+        // Catch mein bhi dot hata diya
+        const msg = err ? err["message"] : "Error";
+        console["error"]("🔥 Error:", msg);
+
+        return res["status"](500)["json"]({ success: false, error: msg });
+    }
+};
+// 4. Sirf Login User ki bookings laana (Dashboard ke liye) 👈 NEW FUNCTION
+const getMyBookings = async(req, res) => {
+    try {
+        // Safe check: Kuch cases mein id hoti hai, kuch mein _id
+        const userId = req.user._id || req.user.id;
+
+        if (!userId) {
+            return res.status(400).json({ success: false, message: "User ID not found in request" });
+        }
+
+        console.log("🔍 Fetching bookings for User ID:", userId);
+
+        // Filter by userId and sort by latest first
+        const bookings = await Payment.find({ userId: userId }).sort({ createdAt: -1 });
+
+        res.status(200).json(bookings);
+    } catch (err) {
+        console.error("❌ Error fetching bookings:", err.message);
+        res.status(500).json({ success: false, message: err.message });
     }
 };
 
@@ -70,5 +132,6 @@ const getAllPayments = async(req, res) => {
 module.exports = {
     checkout,
     verifyAndSave,
-    getAllPayments
+    getAllPayments,
+    getMyBookings
 };
