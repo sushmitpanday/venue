@@ -5,7 +5,7 @@ import { User, Mail, Lock, UserPlus, ArrowRight, MapPin, Phone, Briefcase, Credi
 
 const API_BASE = window.location.hostname === "localhost" 
   ? "http://localhost:3000" 
-  : "https://venue-sooty.vercel.app";
+  : "https://venue-8.onrender.com";
 
 const Register = () => {
   const [firstName, setFirstName] = useState('');
@@ -15,7 +15,6 @@ const Register = () => {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [occupation, setOccupation] = useState('');
-  // --- Naye Fields: Govt ID ---
   const [idType, setIdType] = useState('Aadhar');
   const [idNumber, setIdNumber] = useState('');
   
@@ -33,8 +32,8 @@ const Register = () => {
             phone: phone,
             address: address,
             occupation: occupation,
-            govtIdType: idType,     // Backend mein add karein
-            govtIdNumber: idNumber  // Backend mein add karein
+            govtIdType: idType,
+            govtIdNumber: idNumber
         };
 
         const response = await axios.post(`${API_BASE}/api/auth/owner/register`, payload);
@@ -51,17 +50,20 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6 font-sans relative overflow-hidden">
-      <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[120px]"></div>
+    // Background changed to pink-400
+    <div className="min-h-screen bg-pink-400 flex items-center justify-center p-6 font-sans relative overflow-hidden">
+      {/* Decorative Blur forced to White/Rose for Pink Theme */}
+      <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-white/20 rounded-full blur-[120px]"></div>
 
-      <div className="w-full max-w-lg bg-zinc-950 border border-zinc-900 rounded-[2.5rem] p-10 shadow-2xl relative z-10 my-10">
+      {/* Card Background forced to Pink-400 with better border */}
+      <div className="w-full max-w-lg bg-pink-400 border border-white/30 rounded-[2.5rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.2)] relative z-10 my-10">
         
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-cyan-500/10 rounded-[1.5rem] mb-4 border border-cyan-500/20">
-            <UserPlus className="text-cyan-400" size={30} />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-[1.5rem] mb-4 border border-white/30">
+            <UserPlus className="text-white" size={30} />
           </div>
           <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">
-            USER <span className="text-cyan-400">Verification</span>
+            USER <span className="text-rose-800">Verification</span>
           </h2>
         </div>
 
@@ -86,17 +88,17 @@ const Register = () => {
               value={idType}
               onChange={(e) => setIdType(e.target.value)}
             >
-              <option value="Aadhar">AADHAR</option>
-              <option value="PAN">PAN CARD</option>
-              <option value="VoterID">VOTER ID</option>
-              <option value="Driving">DL</option>
+              <option value="Aadhar" className="bg-pink-500 text-white">AADHAR</option>
+              <option value="PAN" className="bg-pink-500 text-white">PAN CARD</option>
+              <option value="VoterID" className="bg-pink-500 text-white">VOTER ID</option>
+              <option value="Driving" className="bg-pink-500 text-white">DL</option>
             </select>
             <div className="relative col-span-2 group">
-              <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-cyan-400" size={16} />
+              {/* <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 group-focus-within:text-white" size={16} /> */}
               <input 
                 type="text" 
                 placeholder="GOVT ID NUMBER" 
-                className="input-style-custom" 
+                className="input-style-custom pl-10" 
                 onChange={(e) => setIdNumber(e.target.value)} 
                 required 
               />
@@ -107,15 +109,16 @@ const Register = () => {
 
           <input type="password" placeholder="CREATE PASSWORD" className="input-style-custom pl-4" onChange={(e) => setPassword(e.target.value)} required />
 
-          <button type="submit" disabled={loading} className="w-full bg-white hover:bg-cyan-400 text-black font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-2 group text-xs uppercase mt-4">
+          {/* Button changed to Rose-800 for contrast on Pink bg */}
+          <button type="submit" disabled={loading} className="w-full bg-rose-800 hover:bg-rose-900 text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-2 group text-xs uppercase mt-4 shadow-xl">
             {loading ? 'Verifying...' : 'Create Verified Account'}
             {!loading && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
           </button>
         </form>
 
-        <div className="mt-8 text-center border-t border-zinc-900 pt-6">
-          <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">
-            Already registered? <Link to="/login" className="text-white hover:text-cyan-400 underline">Login</Link>
+        <div className="mt-8 text-center border-t border-white/20 pt-6">
+          <p className="text-white/70 text-[10px] font-black uppercase tracking-widest">
+            Already registered? <Link to="/login" className="text-white hover:text-rose-800 underline">Login</Link>
           </p>
         </div>
       </div>
@@ -123,8 +126,8 @@ const Register = () => {
       <style dangerouslySetInnerHTML={{__html: `
         .input-style-custom {
           width: 100%;
-          background-color: #18181b;
-          border: 1px solid #27272a;
+          background-color: rgba(255, 255, 255, 0.15);
+          border: 1px solid rgba(255, 255, 255, 0.3);
           border-radius: 1rem;
           padding: 0.8rem 1rem;
           font-size: 0.7rem;
@@ -133,9 +136,12 @@ const Register = () => {
           outline: none;
           transition: all 0.2s;
         }
+        .input-style-custom::placeholder {
+          color: rgba(255, 255, 255, 0.7);
+        }
         .input-style-custom:focus {
-          border-color: rgba(34, 211, 238, 0.5);
-          background-color: black;
+          border-color: white;
+          background-color: rgba(255, 255, 255, 0.25);
         }
       `}} />
     </div>

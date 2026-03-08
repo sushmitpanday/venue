@@ -1,212 +1,235 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, IndianRupee, PlusCircle, List, Trash2, Edit3, X, ShieldCheck, Image as ImageIcon, LogOut } from 'lucide-react';
+import { MapPin, Eye, Calendar as CalendarIcon, X, Loader2, LogOut, User, ShieldCheck, ChevronLeft, ChevronRight, Clock, CheckCircle, ReceiptText, IndianRupee } from 'lucide-react';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 const OwnerDashboard = () => {
     const navigate = useNavigate();
-    const API_BASE = window.location.hostname === "localhost" 
-        ? "http://localhost:3000" 
-        : "https://venue-sooty.vercel.app";
-    
-    const [activeTab, setActiveTab] = useState('view');
-    const [myVenues, setMyVenues] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [editingVenue, setEditingVenue] = useState(null);
-    
-    const [venueData, setVenueData] = useState({
-        name: '', price: '', city: '', tehsil: '', state: '', address: '', image: ''
-    });
+    const API_BASE = window.location.hostname === "localhost" ? "http://localhost:3000" : "https://venue-8.onrender.com";
 
-    // IMAGE SELECT LOGIC
-    const handleImageChange = (e, isEditing = false) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                if (isEditing) {
-                    setEditingVenue({ ...editingVenue, image: reader.result });
-                } else {
-                    setVenueData({ ...venueData, image: reader.result });
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    };
+    const [venues, setVenues] = useState([]);
+    const [payments, setPayments] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedVenue, setSelectedVenue] = useState(null);
+    const [showCalendar, setShowCalendar] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [paymentLoading, setPaymentLoading] = useState(false);
+    const [currentImgIdx, setCurrentImgIdx] = useState(0);
 
-    const fetchMyVenues = async () => {
-        const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const displayName = user.fullname || user.name || "Owner";
+
+    const fetchPayments = useCallback(async () => {
+        setLoading(true);
         try {
-            const res = await axios.get(`${API_BASE}/api/venue/my-venues`, {
+            const res = await axios.get(`${API_BASE}/api/payment/all-payments`, { 
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setMyVenues(res.data);
-        } catch (err) { console.error("Venues fetch error", err); }
-    };
+            let data = res.data.payments || res.data.data || (Array.isArray(res.data) ? res.data : []);
+            setPayments([...data].reverse());
+        } catch (err) {
+            console.error("Payment Fetch Error", err);
+        } finally {
+            setLoading(false);
+        }
+    }, [API_BASE, token]);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) fetchMyVenues(); else navigate('/login');
-    }, [navigate]);
-
-    const handleSaveVenue = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        try {
-            await axios.post(`${API_BASE}/api/venue/register`, {
-                name: venueData.name,
-                price: Number(venueData.price),
-                image: venueData.image,
-                location: { address: venueData.address, city: venueData.city, state: venueData.state }
-            }, { headers: { Authorization: `Bearer ${token}` } });
-            alert("✨ Venue Registered Successfully!");
-            setVenueData({ name: '', price: '', city: '', state: '', address: '', image: '' });
-            fetchMyVenues();
-            setActiveTab('view'); 
-        } catch (err) { alert("❌ Error: " + (err.response?.data?.message || "Failed to save")); } finally { setLoading(false); }
-    };
-
-    const handleUpdate = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        try {
-            await axios.put(`${API_BASE}/api/venue/${editingVenue._id}`, editingVenue, { headers: { Authorization: `Bearer ${token}` } });
-            alert("✅ Venue Updated!");
-            setEditingVenue(null);
-            fetchMyVenues();
-        } catch (err) { alert("❌ Update failed!"); } finally { setLoading(false); }
-    };
-
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure?")) {
-            const token = localStorage.getItem('token');
+        if (!token) return navigate('/login');
+        
+        const fetchVenues = async () => {
             try {
-                await axios.delete(`${API_BASE}/api/venue/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-                alert("🗑️ Venue Deleted!");
-                fetchMyVenues();
-            } catch (err) { alert("Delete failed."); }
-        }
+                const res = await axios.get(`${API_BASE}/api/venue/all`);
+                setVenues(res.data.reverse());
+            } catch (err) { console.error(err); }
+        };
+
+        fetchVenues();
+        fetchPayments();
+    }, [token, navigate, API_BASE, fetchPayments]);
+
+    const getDisplayImage = (venue) => {
+        if (venue?.images?.[0]) return venue.images[0];
+        if (typeof venue?.image === 'string') return venue.image;
+        return "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=1000";
+    };
+
+    const handlePayment = async (venue) => {
+        if (!window.Razorpay) return alert("Razorpay SDK Error!");
+        setPaymentLoading(true);
+        try {
+            // FIX: Sending 'price' instead of 'amount' to match backend controller
+            const { data } = await axios.post(`${API_BASE}/api/payment/checkout`, 
+                { price: venue.price }, 
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            const options = {
+                key: "rzp_live_SINjf374iwKdqS", 
+                amount: data.order.amount,
+                currency: "INR",
+                name: "RENT MY VENUE",
+                order_id: data.order.id,
+                handler: async (response) => {
+                    const bookingData = {
+                        venueId: venue._id,
+                        venueName: venue.name, // Added for your schema
+                        userId: user?._id || user?.id,
+                        userEmail: user?.email,
+                        userName: displayName,
+                        bookingDate: selectedDate.toISOString().split('T')[0],
+                        amount: venue.price,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature
+                    };
+                    const res = await axios.post(`${API_BASE}/api/payment/verify`, bookingData, { headers: { Authorization: `Bearer ${token}` } });
+                    if (res.data.success) {
+                        fetchPayments();
+                        setSelectedVenue(null);
+                        navigate('/paymentsuccess?reference=' + response.razorpay_payment_id);
+                    }
+                },
+                prefill: { name: displayName, email: user?.email || "" },
+                theme: { color: "#f472b6" },
+                modal: { ondismiss: () => setPaymentLoading(false) }
+            };
+            new window.Razorpay(options).open();
+        } catch (err) { 
+            console.error("Payment Error Details:", err.response?.data || err.message);
+            alert("Payment Error! Check console for details."); 
+        } finally { setPaymentLoading(false); }
     };
 
     return (
-        <div className="min-h-screen bg-black text-white font-sans">
-            <nav className="border-b border-zinc-900 bg-zinc-950/50 backdrop-blur-md px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-                <div className="flex items-center gap-2">
-                    <ShieldCheck className="text-cyan-400" size={28} />
-                    <span className="font-black tracking-tighter text-xl uppercase italic">Venue<span className="text-cyan-400">Hub</span></span>
+        <div className="min-h-screen bg-pink-400 text-zinc-900 font-sans">
+            <style>{`
+                .react-calendar { background: white !important; border: none !important; border-radius: 24px; padding: 15px; width: 100% !important; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); } 
+                .react-calendar__tile--active { background: #f472b6 !important; color: white !important; border-radius: 12px; } 
+                .react-calendar__navigation button { color: #db2777 !important; font-weight: 800; }
+                .react-calendar__month-view__days__day--neighboringMonth { color: #f9a8d4 !important; }
+            `}</style>
+
+            <nav className="border-b border-pink-500/30 bg-white/20 backdrop-blur-xl px-6 py-4 flex justify-between items-center sticky top-0 z-[100]">
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+                    <ShieldCheck className="text-white" size={28} />
+                    <span className="font-black tracking-tighter text-xl uppercase italic text-white">rentmy<span className="text-zinc-900">venue</span></span>
                 </div>
-                <button onClick={() => {localStorage.clear(); navigate('/login');}} className="flex items-center gap-2 bg-red-500/5 text-red-500 border border-red-500/20 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-red-500 hover:text-white transition-all tracking-widest">
-                    <LogOut size={14}/> LOGOUT
+                <button 
+                    onClick={() => navigate('/')} 
+                    className="flex items-center gap-2 bg-white/30 px-4 py-2 rounded-2xl border border-white/40 shadow-sm"
+                >
+                    <ChevronLeft size={18} />
+                    <span className="text-[10px] font-black uppercase">Back to Venues</span>
                 </button>
+                <div className="flex items-center gap-4">
+                    <div className="bg-white/30 px-4 py-2 rounded-full border border-white/40 flex items-center gap-2">
+                        <User size={12} className="text-zinc-900" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-900">{displayName}</span>
+                    </div>
+                    <button onClick={() => { localStorage.clear(); navigate('/'); }} className="bg-zinc-900 text-white p-2 rounded-full hover:bg-red-500 transition-all shadow-lg"><LogOut size={16} /></button>
+                </div>
             </nav>
 
-            <div className="max-w-6xl mx-auto p-6 md:p-10">
-                <div className="flex max-w-sm mx-auto gap-2 mb-12 bg-zinc-900/50 p-1.5 rounded-[1.5rem] border border-zinc-800">
-                    <button onClick={() => setActiveTab('view')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-[1rem] font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'view' ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20' : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800'}`}>
-                        <List size={16}/> My List
-                    </button>
-                    <button onClick={() => setActiveTab('add')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-[1rem] font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'add' ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20' : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800'}`}>
-                        <PlusCircle size={16}/> Add New
-                    </button>
+            <div className="max-w-7xl mx-auto p-6 md:p-10">
+                <header className="mb-10 text-center md:text-left">
+                    <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter text-white drop-shadow-sm">Premium <span className="text-zinc-900">Venues</span></h1>
+                </header>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
+                    {venues.map((venue) => (
+                        <motion.div key={venue._id} whileHover={{ y: -8 }} className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden group border border-pink-200">
+                            <div className="h-48 relative overflow-hidden">
+                                <img src={getDisplayImage(venue)} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" alt={venue.name} />
+                                <div className="absolute top-4 right-4 bg-zinc-900 px-3 py-1 rounded-full text-[10px] font-black text-white italic">₹{venue.price}/DAY</div>
+                            </div>
+                            <div className="p-6">
+                                <h3 className="font-black uppercase text-zinc-900 mb-2 truncate text-sm">{venue.name}</h3>
+                                <p className="text-pink-600 text-[10px] font-bold flex items-center gap-1 uppercase mb-6"><MapPin size={12} /> {venue.location?.city}</p>
+                                <div className="flex gap-2">
+                                    <button onClick={() => { setSelectedVenue(venue); setCurrentImgIdx(0); }} className="flex-1 bg-zinc-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-pink-500 transition-all">Details</button>
+                                    <button onClick={() => setShowCalendar(venue)} className="bg-pink-100 text-pink-600 border border-pink-200 p-3 rounded-2xl hover:bg-pink-200 transition-all"><CalendarIcon size={18} /></button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
                 </div>
 
-                {activeTab === 'view' && (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {myVenues.length > 0 ? (
-                            myVenues.map((venue) => (
-                                <div key={venue._id} className="bg-zinc-950 rounded-[2.5rem] border border-zinc-900 relative group hover:border-zinc-700 transition-all overflow-hidden shadow-2xl">
-                                    <div className="h-48 w-full relative">
-                                        <img src={venue.image || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=500&q=60"} alt="venue" className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 transition-all duration-500" />
-                                        <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                            <button onClick={() => setEditingVenue(venue)} className="bg-black/50 backdrop-blur-md border border-white/10 p-2.5 rounded-2xl text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all"><Edit3 size={16} /></button>
-                                            <button onClick={() => handleDelete(venue._id)} className="bg-black/50 backdrop-blur-md border border-white/10 p-2.5 rounded-2xl text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-xl"><Trash2 size={16} /></button>
-                                        </div>
-                                    </div>
-                                    <div className="p-7">
-                                        <h3 className="text-lg font-black uppercase tracking-tight mb-2 text-zinc-100">{venue.name}</h3>
-                                        <div className="flex items-center gap-1 text-cyan-400 font-black text-sm mb-4">
-                                            <IndianRupee size={14} /> <span>{venue.price} <span className="text-[10px] text-zinc-600 font-bold">/ PER DAY</span></span>
-                                        </div>
-                                        <div className="text-zinc-500 text-[11px] font-bold flex items-center gap-2 uppercase tracking-wide border-t border-zinc-900 pt-4">
-                                            <MapPin size={12} className="text-zinc-700" /> {venue.location?.city}, {venue.location?.state}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="col-span-full text-center py-24 bg-zinc-950 rounded-[3rem] border-2 border-dashed border-zinc-900">
-                                <List className="mx-auto text-zinc-800 mb-4" size={48} />
-                                <p className="text-zinc-600 text-xs font-black uppercase tracking-[0.3em]">No venues in your inventory</p>
-                            </div>
-                        )}
-                    </div>
-                )}
+                <div className="mb-8 px-2">
+                    <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Payment <span className="text-zinc-900">History</span></h2>
+                </div>
 
-                {activeTab === 'add' && (
-                    <div className="max-w-xl mx-auto bg-zinc-950 p-10 rounded-[3rem] border border-zinc-900 shadow-2xl relative">
-                        <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 bg-cyan-500 text-black px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">New Entry</div>
-                        <h2 className="text-2xl font-black mb-10 text-white uppercase tracking-tighter italic flex items-center gap-3">Register <span className="text-cyan-400">Venue</span></h2>
-                        <form onSubmit={handleSaveVenue} className="space-y-5">
-                            <input type="text" placeholder="Venue Name" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold transition-all" value={venueData.name} onChange={(e) => setVenueData({...venueData, name: e.target.value})} required />
-                            
-                            {/* PHOTO SELECT FROM GALLERY */}
-                            <label className="flex flex-col items-center justify-center w-full h-32 bg-zinc-900 border border-zinc-800 border-dashed rounded-2xl cursor-pointer hover:border-cyan-500 overflow-hidden relative">
-                                {venueData.image ? (
-                                    <img src={venueData.image} alt="preview" className="w-full h-full object-cover opacity-60" />
-                                ) : (
-                                    <div className="flex flex-col items-center">
-                                        <ImageIcon className="text-zinc-600 mb-2" size={24} />
-                                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Pick From Gallery</span>
-                                    </div>
-                                )}
-                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, false)} />
-                            </label>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <input type="number" placeholder="Daily Price" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold" value={venueData.price} onChange={(e) => setVenueData({...venueData, price: e.target.value})} required />
-                                <input type="text" placeholder="City" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold" value={venueData.city} onChange={(e) => setVenueData({...venueData, city: e.target.value})} required />
-                            </div>
-                            <input type="text" placeholder="State" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold mb-3" value={venueData.state} onChange={(e) => setVenueData({...venueData, state: e.target.value})} required />
-                            <textarea placeholder="Address" rows="3" className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-2xl outline-none focus:border-cyan-500 text-xs font-bold" value={venueData.address} onChange={(e) => setVenueData({...venueData, address: e.target.value})} required></textarea>
-                            <button disabled={loading} className="w-full bg-white text-black py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[12px] hover:bg-cyan-400 transition-all shadow-xl shadow-cyan-500/10 mt-4">{loading ? "PROCESSING..." : "REGISTER TO DIRECTORY"}</button>
-                        </form>
-                    </div>
-                )}
+                <div className="bg-white rounded-[3rem] overflow-hidden shadow-2xl overflow-x-auto border-4 border-white">
+                    <table className="w-full text-left border-collapse min-w-[900px]">
+                        <thead>
+                            <tr className="bg-zinc-50 text-[10px] font-black uppercase text-pink-500">
+                                <th className="p-7">Venue & User</th>
+                                <th className="p-7">Payment ID</th>
+                                <th className="p-7">Amount</th>
+                                <th className="p-7">Date</th>
+                                <th className="p-7 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading ? (
+                                <tr><td colSpan="5" className="p-24 text-center"><Loader2 className="animate-spin text-pink-500 mx-auto" size={40} /></td></tr>
+                            ) : payments.map((pay) => (
+                                <tr key={pay._id} className="border-b border-pink-50 hover:bg-pink-50/50 transition-all">
+                                    <td className="p-7">
+                                        <div className="flex flex-col">
+                                            <span className="text-zinc-900 font-black uppercase text-sm italic">{pay.venueName || pay.venueId?.name || 'Private Venue'}</span>
+                                            <span className="text-pink-400 text-[9px] font-bold">{pay.userEmail}</span>
+                                        </div>
+                                    </td>
+                                    <td className="p-7 font-mono text-[10px] text-zinc-400">{pay.razorpay_payment_id}</td>
+                                    <td className="p-7 font-black text-zinc-900 italic text-lg">₹{pay.amount}</td>
+                                    <td className="p-7 text-[10px] font-black uppercase text-zinc-500">{pay.bookingDate || pay.date || new Date(pay.createdAt).toLocaleDateString()}</td>
+                                    <td className="p-7 text-center">
+                                        <span className="bg-emerald-100 text-emerald-600 px-4 py-2 rounded-full border border-emerald-200 text-[9px] font-black uppercase">Success</span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            {editingVenue && (
-                <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
-                    <div className="bg-zinc-950 p-8 rounded-[2.5rem] w-full max-w-md border border-zinc-800 shadow-2xl">
-                        <div className="flex justify-between items-center mb-8">
-                            <h2 className="font-black uppercase text-lg italic text-cyan-400">Edit Venue Details</h2>
-                            <button onClick={() => setEditingVenue(null)} className="text-zinc-500 hover:text-white transition-colors"><X/></button>
-                        </div>
-                        <form onSubmit={handleUpdate} className="space-y-4">
-                            <div className="space-y-1">
-                                <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest ml-2">Venue Name</label>
-                                <input className="w-full p-4 bg-zinc-900 rounded-2xl border border-zinc-800 text-sm outline-none focus:border-cyan-500 transition-all" value={editingVenue.name} onChange={e => setEditingVenue({...editingVenue, name: e.target.value})} />
-                            </div>
-
-                            {/* EDIT MODAL PHOTO PICKER */}
-                            <label className="flex flex-col items-center justify-center w-full h-24 bg-zinc-900 border border-zinc-800 border-dashed rounded-2xl cursor-pointer hover:border-cyan-500 overflow-hidden relative">
-                                <img src={editingVenue.image} alt="preview" className="w-full h-full object-cover opacity-50" />
-                                <div className="absolute inset-0 flex items-center justify-center"><ImageIcon size={20}/></div>
-                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, true)} />
-                            </label>
-
-                            <div className="space-y-1">
-                                <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest ml-2">Price (₹)</label>
-                                <input className="w-full p-4 bg-zinc-900 rounded-2xl border border-zinc-800 text-sm outline-none focus:border-cyan-500 transition-all" value={editingVenue.price} onChange={e => setEditingVenue({...editingVenue, price: e.target.value})} />
-                            </div>
-                            <button disabled={loading} type="submit" className="w-full bg-cyan-500 text-black py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-cyan-400 transition-all mt-4">{loading ? "SAVING..." : "UPDATE CHANGES"}</button>
-                        </form>
+            <AnimatePresence>
+                {selectedVenue && (
+                    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-zinc-900/60 backdrop-blur-xl">
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-white w-full max-w-5xl rounded-[3.5rem] overflow-hidden relative grid grid-cols-1 md:grid-cols-2 shadow-3xl">
+                             <button onClick={() => setSelectedVenue(null)} className="absolute top-8 right-8 text-white z-50 bg-zinc-900/80 p-2 rounded-full"><X size={20} /></button>
+                             <div className="h-80 md:h-[500px] relative bg-zinc-100">
+                                <img src={getDisplayImage(selectedVenue)} className="h-full w-full object-cover" alt="venue" />
+                             </div>
+                             <div className="p-12 flex flex-col justify-center">
+                                 <h2 className="text-4xl font-black mb-2 uppercase italic text-zinc-900">{selectedVenue.name}</h2>
+                                 <p className="text-pink-500 font-black text-xl italic mb-8">Booking for: {selectedDate.toDateString()}</p>
+                                 <button onClick={() => handlePayment(selectedVenue)} className="w-full bg-zinc-900 text-white py-5 rounded-[1.5rem] font-black uppercase hover:bg-pink-500 transition-all shadow-xl">
+                                     {paymentLoading ? <Loader2 className="animate-spin mx-auto" /> : `PAY ₹${selectedVenue.price} & CONFIRM`}
+                                 </button>
+                             </div>
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+                {showCalendar && (
+                    <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-zinc-900/60 backdrop-blur-md">
+                        <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="bg-white p-8 rounded-[2.5rem] w-full max-w-md shadow-3xl">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="font-black uppercase italic text-pink-500">Select Booking Date</h3>
+                                <button onClick={() => setShowCalendar(null)} className="text-zinc-400 hover:text-zinc-900"><X size={24} /></button>
+                            </div>
+                            <Calendar onChange={setSelectedDate} value={selectedDate} minDate={new Date()} />
+                            <button onClick={() => { setShowCalendar(null); setSelectedVenue(showCalendar); }} className="w-full bg-zinc-900 text-white py-4 rounded-2xl font-black uppercase mt-6 hover:bg-pink-500 shadow-lg transition-all">Set This Date</button>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
-
 export default OwnerDashboard;
