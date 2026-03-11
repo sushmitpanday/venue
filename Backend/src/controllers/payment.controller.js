@@ -36,9 +36,7 @@ const checkout = async(req, res) => {
 
 // 2. Atlas mein save karna
 const verifyAndSave = async(req, res) => {
-    console["log"]("🚀 SERVER: Verification Shuru...");
     try {
-        // Destructuring bina dot ke
         const {
             razorpay_order_id,
             razorpay_payment_id,
@@ -46,54 +44,53 @@ const verifyAndSave = async(req, res) => {
             venueName,
             amount,
             bookingDate,
+            bookingTime,
+            eventDate, // Frontend se aayega
             userEmail,
             userName
-        } = req["body"] || {};
+        } = req.body || {};
 
-        // Signature logic
-        const secret = process["env"]["RAZORPAY_KEY_SECRET"];
+        const secret = process.env.RAZORPAY_KEY_SECRET;
         const body = `${razorpay_order_id}|${razorpay_payment_id}`;
-        const expectedSignature = crypto["createHmac"]("sha256", secret)["update"](body)["digest"]("hex");
+        const expectedSignature = crypto.createHmac("sha256", secret).update(body).digest("hex");
 
         if (expectedSignature === razorpay_signature || razorpay_signature === "dummy_signature") {
+            const userObj = req.user || {};
+            const finalUserId = userObj._id || userObj.id;
 
-            // User ID safe extraction
-            const userObj = req["user"] || {};
-            const finalUserId = userObj["_id"] || userObj["id"];
+            // Naya: Transaction ka current date aur time nikalna
+            const now = new Date();
+            const tDate = now.toLocaleDateString('en-GB'); // DD/MM/YYYY
+            const tTime = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
-            if (!finalUserId) {
-                return res["status"](401)["json"]({ success: false, message: "No User" });
-            }
-
-            // Database Entry
-            const paymentRecord = await Payment["create"]({
+            // Database Entry (Sare fields safe hain)
+            const paymentRecord = await Payment.create({
                 razorpay_order_id,
                 razorpay_payment_id,
                 razorpay_signature,
                 userId: finalUserId,
-                userEmail: userObj["email"] || userEmail,
+                userEmail: userObj.email || userEmail,
                 venueName: venueName,
                 amount: amount,
-                bookingDate: bookingDate || new Date()["toISOString"]()["split"]('T')[0]
+                // Nayi fields yahan save ho rahi hain
+                bookingDate: bookingDate || tDate,
+                bookingTime: bookingTime || "N/A",
+                eventDate: eventDate || "Not Specified",
+                transactionDate: tDate,
+                transactionTime: tTime,
+                paymentMode: "Online"
             });
 
-            // Email Helper (Safe Call)
             if (userEmail) {
-                sendBookingEmails({ userEmail, userName }, { venueName, amount, transactionId: razorpay_payment_id })["catch"]((e) => console["error"]("Email Fail"));
+                sendBookingEmails({ userEmail, userName }, { venueName, amount, transactionId: razorpay_payment_id }).catch((e) => console.error("Email Fail"));
             }
 
-            return res["status"](200)["json"]({ success: true, message: "Saved" });
-
+            return res.status(200).json({ success: true, message: "Saved" });
         } else {
-            return res["status"](400)["json"]({ success: false, message: "Invalid" });
+            return res.status(400).json({ success: false, message: "Invalid" });
         }
-
     } catch (err) {
-        // Catch mein bhi dot hata diya
-        const msg = err ? err["message"] : "Error";
-        console["error"]("🔥 Error:", msg);
-
-        return res["status"](500)["json"]({ success: false, error: msg });
+        return res.status(500).json({ success: false, error: err.message });
     }
 };
 // 4. Sirf Login User ki bookings laana (Dashboard ke liye) 👈 NEW FUNCTION
