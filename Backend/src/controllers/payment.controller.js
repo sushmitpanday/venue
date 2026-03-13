@@ -81,8 +81,19 @@ const verifyAndSave = async(req, res) => {
                 paymentMode: "Online"
             });
 
+            // --- EMAIL LOGIC UPDATED ---
             if (userEmail) {
-                sendBookingEmails({ userEmail, userName }, { venueName, amount, transactionId: razorpay_payment_id }).catch((e) => console.error("Email Fail"));
+                // 1. User ko email bhejona
+                sendBookingEmails({ userEmail, userName }, { venueName, amount, transactionId: razorpay_payment_id }).catch((e) => console.error("User Email Fail:", e));
+
+                // 2. Admin ko email bhejona (Aapka Email Yahan Ayega)
+                const ADMIN_EMAIL = "apna-admin-email@gmail.com"; // <-- YAHAN APNA EMAIL DALO
+
+                sendBookingEmails({ userEmail: ADMIN_EMAIL, userName: "Admin" }, {
+                    venueName: `NEW BOOKING: ${venueName}`,
+                    amount,
+                    transactionId: razorpay_payment_id
+                }).catch((e) => console.error("Admin Email Fail:", e));
             }
 
             return res.status(200).json({ success: true, message: "Saved" });
